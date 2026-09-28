@@ -48,7 +48,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -96,7 +95,7 @@ const emptyStats: SceneStats = {
   koi: FISH.initialCount,
 };
 
-const AMBIENT_IDLE_DELAY_MS = 2400;
+const AMBIENT_IDLE_DELAY_MS = 3500;
 const GITHUB_REPOSITORY = "milesueee/milesueee-koi-pond";
 
 // Restores v2 (or migrates v1) localStorage settings into the store before
@@ -156,11 +155,75 @@ function WeatherIcon({ id }: { id: WeatherPresetId }) {
   }
 }
 
+function useHoldToRepeat(action: () => void, disabled: boolean) {
+  const timerRef = useRef<number | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const isRepeatingRef = useRef(false);
+  const actionRef = useRef(action);
+  actionRef.current = action;
+
+  const stop = useCallback(() => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (disabled) stop();
+  }, [disabled, stop]);
+
+  useEffect(() => () => stop(), [stop]);
+
+  const handlePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0 || disabled) return;
+      stop();
+      isRepeatingRef.current = false;
+      timerRef.current = window.setTimeout(() => {
+        isRepeatingRef.current = true;
+        actionRef.current();
+        intervalRef.current = window.setInterval(() => {
+          actionRef.current();
+        }, 80);
+      }, 350);
+    },
+    [disabled, stop],
+  );
+
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (isRepeatingRef.current) {
+        event.preventDefault();
+        isRepeatingRef.current = false;
+        return;
+      }
+      if (!disabled) {
+        actionRef.current();
+      }
+    },
+    [disabled],
+  );
+
+  return {
+    onPointerDown: handlePointerDown,
+    onPointerUp: stop,
+    onPointerLeave: stop,
+    onPointerCancel: stop,
+    onClick: handleClick,
+  };
+}
+
 export function App() {
   const isMobile = useIsMobile();
   const stageRef = useRef<HTMLElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dockRef = useRef<HTMLElement | null>(null);
   const ambientAudioContextRef = useRef<AudioContext | null>(null);
   const ambientAudioGainRef = useRef<GainNode | null>(null);
   const ambientAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
@@ -223,6 +286,9 @@ export function App() {
     const current = runtimeRef.current?.school.count ?? settings.live.koi.initialCount;
     settings.set(["koi", "initialCount"], clamp(current + amount, 1, 48));
   }, []);
+
+  const minusHold = useHoldToRepeat(() => changeKoiCount(-1), stats.koi <= 1);
+  const plusHold = useHoldToRepeat(() => changeKoiCount(1), stats.koi >= 48);
 
   const setAmbientModeState = useCallback((active: boolean) => {
     ambientModeRef.current = active;
@@ -415,32 +481,62 @@ export function App() {
       return;
     }
 
-    let idleTimer = window.setTimeout(
-      () => setAmbientControlsVisible(false),
-      AMBIENT_IDLE_DELAY_MS,
-    );
+    let idleTimer: number | null = window.setTimeout(() => {
+      if (!dockRef.current?.contains(document.activeElement)) {
+        setAmbientControlsVisible(false);
+      }
+    }, AMBIENT_IDLE_DELAY_MS);
+
+    const resetIdleTimer = (): void => {
+      if (idleTimer !== null) window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => {
+        if (!dockRef.current?.contains(document.activeElement)) {
+          setAmbientControlsVisible(false);
+        }
+      }, AMBIENT_IDLE_DELAY_MS);
+    };
+
     const revealControls = (): void => {
       setAmbientControlsVisible(true);
-      window.clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(
-        () => setAmbientControlsVisible(false),
-        AMBIENT_IDLE_DELAY_MS,
-      );
+      resetIdleTimer();
+    };
+
+    const handleFocusIn = (event: FocusEvent): void => {
+      setAmbientControlsVisible(true);
+      if (dockRef.current?.contains(event.target as Node)) {
+        if (idleTimer !== null) window.clearTimeout(idleTimer);
+      } else {
+        resetIdleTimer();
+      }
+    };
+
+    const handleFocusOut = (event: FocusEvent): void => {
+      if (!dockRef.current?.contains(event.relatedTarget as Node)) {
+        resetIdleTimer();
+      }
     };
 
     window.addEventListener("pointermove", revealControls);
     window.addEventListener("pointerdown", revealControls);
     window.addEventListener("keydown", revealControls);
+    window.addEventListener("focusin", handleFocusIn);
+    window.addEventListener("focusout", handleFocusOut);
     return () => {
-      window.clearTimeout(idleTimer);
+      if (idleTimer !== null) window.clearTimeout(idleTimer);
       window.removeEventListener("pointermove", revealControls);
       window.removeEventListener("pointerdown", revealControls);
       window.removeEventListener("keydown", revealControls);
+      window.removeEventListener("focusin", handleFocusIn);
+      window.removeEventListener("focusout", handleFocusOut);
     };
   }, [ambientMode, settingsOpen, weatherMenuOpen]);
 
   useEffect(() => {
-    if (!showInterface && previewFamilyRef.current !== null) setFamilyPreview(null);
+    if (!showInterface) {
+      if (previewFamilyRef.current !== null) setFamilyPreview(null);
+      setSettingsOpen(false);
+      setWeatherMenuOpen(false);
+    }
   }, [showInterface, setFamilyPreview]);
 
   useEffect(() => {
@@ -567,12 +663,13 @@ export function App() {
   const ambientUiHeldOpen = settingsOpen || weatherMenuOpen;
   const ambientUiHidden =
     ambientMode && !ambientControlsVisible && !ambientUiHeldOpen;
+  const uiHidden = !showInterface || ambientUiHidden;
 
   return (
     <main
       ref={stageRef}
       className={`stage${ambientMode ? " stage--ambient" : ""}${
-        ambientUiHidden
+        uiHidden
           ? " stage--ambient-idle"
           : ""
       }`}
@@ -594,17 +691,17 @@ export function App() {
           )}
         </div>
 
-        {showInterface && (
-          <div
-            className={`pond-ui${
-              ambientUiHidden
-                ? " pond-ui--hidden"
-                : ""
-            }`}
-          >
-            <header className="brand-float">
-              <h1 className="brand-wordmark">milesueee-koi-pond</h1>
-            </header>
+        <div
+          className={`pond-ui${
+            uiHidden
+              ? " pond-ui--hidden"
+              : ""
+          }`}
+          aria-hidden={uiHidden}
+        >
+          <header className="brand-float">
+            <h1 className="brand-wordmark">milesueee-koi-pond</h1>
+          </header>
 
             <div className="top-actions">
               <GitHubStars repo={GITHUB_REPOSITORY} />
@@ -686,71 +783,100 @@ export function App() {
               </Drawer>
             </div>
           </div>
-        )}
 
-        {showInterface && (
-          <nav
-            className={`control-dock${
-              ambientUiHidden
-                ? " control-dock--hidden"
-                : ""
-            }`}
-            aria-label="Simulation controls"
-          >
+        <nav
+          ref={dockRef}
+          className={`control-dock${
+            uiHidden
+              ? " control-dock--hidden"
+              : ""
+          }`}
+          aria-label="Simulation controls"
+          aria-hidden={uiHidden}
+        >
             <div className="control-group control-group--view">
-              <Button
-                className="control-button--ambient"
-                variant="ghost"
-                size="sm"
-                onClick={() => void toggleAmbientMode()}
-                aria-label={ambientMode ? "Exit ambient mode" : "Enter ambient mode"}
-                aria-keyshortcuts="F"
-                aria-pressed={ambientMode}
-              >
-                {ambientMode ? (
-                  <Minimize2 aria-hidden="true" />
-                ) : (
-                  <Maximize2 aria-hidden="true" />
-                )}
-                <span className="control-label">{ambientMode ? "Exit" : "Ambient"}</span>
-                <Kbd className="control-shortcut">F</Kbd>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowInterface(false)}
-                aria-label="Hide interface"
-                aria-keyshortcuts="H"
-              >
-                <EyeOff aria-hidden="true" />
-                <span className="control-label">Hide UI</span>
-                <Kbd className="control-shortcut">H</Kbd>
-              </Button>
+              <Tooltip disabled={isMobile}>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      className="control-button--ambient"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void toggleAmbientMode()}
+                      aria-label={ambientMode ? "Exit ambient mode" : "Enter ambient mode"}
+                      aria-keyshortcuts="F"
+                      aria-pressed={ambientMode}
+                    />
+                  }
+                >
+                  {ambientMode ? (
+                    <Minimize2 aria-hidden="true" />
+                  ) : (
+                    <Maximize2 aria-hidden="true" />
+                  )}
+                  <span className="control-label">{ambientMode ? "Exit" : "Ambient"}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {ambientMode ? "Exit ambient mode (F)" : "Enter ambient mode (F)"}
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip disabled={isMobile}>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowInterface(false)}
+                      aria-label="Hide interface"
+                      aria-keyshortcuts="H"
+                    />
+                  }
+                >
+                  <EyeOff aria-hidden="true" />
+                  <span className="control-label">Hide UI</span>
+                </TooltipTrigger>
+                <TooltipContent>Hide interface (H)</TooltipContent>
+              </Tooltip>
             </div>
             <Separator className="control-divider" orientation="vertical" />
             <div className="control-group control-group--simulation">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={scatter}
-                aria-keyshortcuts="Space"
-              >
-                <Shuffle aria-hidden="true" />
-                <span className="control-label">Scatter</span>
-                <Kbd className="control-shortcut">Space</Kbd>
-              </Button>
+              <Tooltip disabled={isMobile}>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={scatter}
+                      aria-keyshortcuts="Space"
+                    />
+                  }
+                >
+                  <Shuffle aria-hidden="true" />
+                  <span className="control-label">Scatter</span>
+                </TooltipTrigger>
+                <TooltipContent>Scatter koi (Space)</TooltipContent>
+              </Tooltip>
               <Separator orientation="vertical" />
               <div className="koi-stepper">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => changeKoiCount(-1)}
-                  aria-label="Remove one koi"
-                  aria-keyshortcuts="["
-                >
-                  <Minus aria-hidden="true" />
-                </Button>
-                <Tooltip>
+                <Tooltip disabled={isMobile}>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={stats.koi <= 1}
+                        aria-label="Remove one koi"
+                        aria-keyshortcuts="["
+                        {...minusHold}
+                      />
+                    }
+                  >
+                    <Minus aria-hidden="true" />
+                  </TooltipTrigger>
+                  <TooltipContent>Remove koi ([)</TooltipContent>
+                </Tooltip>
+                <Tooltip disabled={isMobile}>
                   <TooltipTrigger
                     render={
                       <div
@@ -766,17 +892,25 @@ export function App() {
                       {stats.koi}
                     </output>
                   </TooltipTrigger>
-                  <TooltipContent>Koi count ([ and ])</TooltipContent>
+                  <TooltipContent>Koi count</TooltipContent>
                 </Tooltip>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => changeKoiCount(1)}
-                  aria-label="Add one koi"
-                  aria-keyshortcuts="]"
-                >
-                  <Plus aria-hidden="true" />
-                </Button>
+                <Tooltip disabled={isMobile}>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={stats.koi >= 48}
+                        aria-label="Add one koi"
+                        aria-keyshortcuts="]"
+                        {...plusHold}
+                      />
+                    }
+                  >
+                    <Plus aria-hidden="true" />
+                  </TooltipTrigger>
+                  <TooltipContent>Add koi (])</TooltipContent>
+                </Tooltip>
               </div>
             </div>
             <Separator className="control-divider" orientation="vertical" />
@@ -854,7 +988,6 @@ export function App() {
               </label>
             </div>
           </nav>
-        )}
       </div>
     </main>
   );

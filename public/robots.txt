@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://koi.m4yank.com/sitemap.xml
+Sitemap: https://milesueee.site/sitemap.xml

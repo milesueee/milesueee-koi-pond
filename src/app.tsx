@@ -2,7 +2,9 @@ import {
   Cloud,
   CloudFog,
   CloudRain,
+  Droplets,
   EyeOff,
+  Fish,
   Maximize2,
   Minus,
   Minimize2,
@@ -15,6 +17,7 @@ import {
   Sunset as SunsetIcon,
   Undo2,
   Volume2,
+  VolumeX,
   Waves,
   X,
 } from "lucide-react";
@@ -48,6 +51,11 @@ import {
 import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { AUDIO } from "./audio-config";
 import { ConfigEditor } from "./config-editor";
 import {
@@ -691,6 +699,7 @@ export function App() {
           >
             <div className="control-group control-group--view">
               <Button
+                className="control-button--ambient"
                 variant="ghost"
                 size="sm"
                 onClick={() => void toggleAmbientMode()}
@@ -731,27 +740,44 @@ export function App() {
                 <Kbd className="control-shortcut">Space</Kbd>
               </Button>
               <Separator orientation="vertical" />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => changeKoiCount(-1)}
-                aria-label="Remove one koi"
-                aria-keyshortcuts="["
-              >
-                <Minus aria-hidden="true" />
-              </Button>
-              <output className="koi-count" aria-live="polite">
-                {stats.koi}
-              </output>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => changeKoiCount(1)}
-                aria-label="Add one koi"
-                aria-keyshortcuts="]"
-              >
-                <Plus aria-hidden="true" />
-              </Button>
+              <div className="koi-stepper">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => changeKoiCount(-1)}
+                  aria-label="Remove one koi"
+                  aria-keyshortcuts="["
+                >
+                  <Minus aria-hidden="true" />
+                </Button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <div
+                        className="koi-count-badge"
+                        tabIndex={0}
+                        role="status"
+                        aria-label={`Koi count: ${stats.koi}`}
+                      />
+                    }
+                  >
+                    <Fish aria-hidden="true" className="koi-count-badge__icon" />
+                    <output className="koi-count" aria-live="polite">
+                      {stats.koi}
+                    </output>
+                  </TooltipTrigger>
+                  <TooltipContent>Koi count ([ and ])</TooltipContent>
+                </Tooltip>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => changeKoiCount(1)}
+                  aria-label="Add one koi"
+                  aria-keyshortcuts="]"
+                >
+                  <Plus aria-hidden="true" />
+                </Button>
+              </div>
             </div>
             <Separator className="control-divider" orientation="vertical" />
             <div className="control-group control-group--environment">
@@ -798,26 +824,34 @@ export function App() {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div className="rain-control">
-                <CloudRain aria-hidden="true" />
-                <span className="rain-control__label">Rain</span>
+              <label className="toggle-control">
+                {rainEnabled ? (
+                  <Droplets aria-hidden="true" className="toggle-control__icon toggle-control__icon--active" />
+                ) : (
+                  <Droplets aria-hidden="true" className="toggle-control__icon toggle-control__icon--muted" />
+                )}
+                <span className="control-label">Ripples</span>
                 <Switch
                   size="sm"
                   checked={rainEnabled}
                   onCheckedChange={handleRainChange}
                   aria-label="Toggle rain ripples"
                 />
-              </div>
-              <div className="rain-control">
-                <Volume2 aria-hidden="true" />
-                <span className="rain-control__label">Sound</span>
+              </label>
+              <label className="toggle-control">
+                {soundEnabled ? (
+                  <Volume2 aria-hidden="true" className="toggle-control__icon toggle-control__icon--active" />
+                ) : (
+                  <VolumeX aria-hidden="true" className="toggle-control__icon toggle-control__icon--muted" />
+                )}
+                <span className="control-label">Sound</span>
                 <Switch
                   size="sm"
                   checked={soundEnabled}
                   onCheckedChange={handleSoundChange}
                   aria-label="Toggle pond ambience"
                 />
-              </div>
+              </label>
             </div>
           </nav>
         )}

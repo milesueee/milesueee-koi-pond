@@ -1,6 +1,6 @@
-# nagomi
+# milesueee-koi-pond
 
-Nagomi is an interactive, procedurally animated koi pond that runs in your browser. The fish
+milesueee-koi-pond is an interactive, procedurally animated koi pond that runs in your browser. The fish
 swim on their own, change depth, react to nearby fish, and gather around the
 water when you click or tap. Ripples, currents, lotus leaves, changing weather,
 and optional river sounds help the pond feel alive.
@@ -11,7 +11,7 @@ tail should bend. The program calculates these movements continuously while
 you watch. This is called **procedural animation**: behavior is created in real
 time rather than played from a fixed video or set of frames.
 
-New to procedural animation? Read [How Nagomi works](docs/how-it-works.md).
+New to procedural animation? Read [How it works](docs/how-it-works.md).
 
 
 https://github.com/user-attachments/assets/34549f7d-41cf-4cf6-af0a-95074bc631d2

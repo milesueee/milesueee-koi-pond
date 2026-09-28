@@ -5,15 +5,35 @@ dist/
 coverage/
 context/
 
+# Cloudflare Wrangler
+.wrangler/
+
 # Local environment and operating-system files
 .env
 .env.*
 !.env.example
 .DS_Store
+Thumbs.db
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# This project uses npm and package-lock.json
+# IDE and Editor configurations
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Alternative package manager lockfiles (this project uses npm)
 pnpm-lock.yaml
 yarn.lock
+bun.lockb
+bun.lock
 
+# AI assistants and local tooling
 .claude
+.gemini
+.codex
+.agent

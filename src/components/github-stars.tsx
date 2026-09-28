@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react"
-
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -10,53 +8,12 @@ import {
 export type GitHubStarsProps = {
   /** GitHub repository in `owner/repo` format. */
   repo: string
-  /** Optional initial star count while the latest count is loaded. */
+  /** Optional initial star count (deprecated, retained for compatibility) */
   stargazersCount?: number
   locales?: Intl.LocalesArgument
 }
 
-type GitHubRepositoryResponse = {
-  stargazers_count?: number
-}
-
-export function GitHubStars({
-  repo,
-  stargazersCount,
-  locales = "en-US",
-}: GitHubStarsProps) {
-  const [count, setCount] = useState<number | undefined>(stargazersCount)
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    void fetch(`https://api.github.com/repos/${repo}`, {
-      headers: { Accept: "application/vnd.github+json" },
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("GitHub request failed")
-        return response.json() as Promise<GitHubRepositoryResponse>
-      })
-      .then((repository) => {
-        if (typeof repository.stargazers_count === "number") {
-          setCount(repository.stargazers_count)
-        }
-      })
-      .catch(() => undefined)
-
-    return () => controller.abort()
-  }, [repo])
-
-  const compactCount =
-    count === undefined
-      ? null
-      : new Intl.NumberFormat(locales, {
-          notation: "compact",
-          compactDisplay: "short",
-        })
-          .format(count)
-          .toLowerCase()
-
+export function GitHubStars({ repo }: GitHubStarsProps) {
   return (
     <Tooltip>
       <TooltipTrigger
@@ -83,18 +40,11 @@ export function GitHubStars({
             fill="currentColor"
           />
         </svg>
-        {compactCount !== null && (
-          <span className="github-stars__count">{compactCount}</span>
-        )}
       </TooltipTrigger>
 
-      <TooltipContent className="tabular-nums">
-        {count === undefined
-          ? "View this project on GitHub"
-          : `${new Intl.NumberFormat(locales).format(count)} ${
-              count === 1 ? "star" : "stars"
-            }`}
-      </TooltipContent>
+      <TooltipContent>View on GitHub</TooltipContent>
     </Tooltip>
   )
 }
+
+export const GitHubLink = GitHubStars

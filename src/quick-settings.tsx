@@ -139,6 +139,7 @@ export function QuickSettings({
 
   const [screensaverEnabled, setScreensaverEnabled] = useSetting<boolean>(["screensaver", "enabled"]);
   const [clockFont, setClockFont] = useSetting<string>(["screensaver", "font"]);
+  const [clockColorMode, setClockColorMode] = useSetting<string>(["screensaver", "colorMode"]);
   const [clockPosition, setClockPosition] = useSetting<string>(["screensaver", "position"]);
   const [clockScale, setClockScale] = useSetting<number>(["screensaver", "scale"]);
   const [clockSeconds, setClockSeconds] = useSetting<boolean>(["screensaver", "showSeconds"]);
@@ -335,7 +336,24 @@ export function QuickSettings({
               >
                 <option value="sans">Mac Minimalist (SF Pro / Inter)</option>
                 <option value="serif">Editorial Serif (Cormorant Garamond)</option>
-                <option value="mono">Retro Monospace (Arcade)</option>
+                <option value="mono">JetBrains Mono</option>
+                <option value="pixel">8-bit Retro (Pixelify)</option>
+              </select>
+            </div>
+            <div className="quick-setting" data-base-ui-swipe-ignore>
+              <div className="quick-setting__copy">
+                <Label htmlFor="quick-clock-color">Clock color</Label>
+                <small>Harmonize with the pond atmosphere or use crisp white.</small>
+              </div>
+              <select
+                id="quick-clock-color"
+                className="quick-setting__select"
+                value={clockColorMode}
+                onChange={(event) => setClockColorMode(event.target.value)}
+              >
+                <option value="auto">Match atmosphere (Adaptive)</option>
+                <option value="white">Pure white</option>
+                <option value="pond">Pond water tint</option>
               </select>
             </div>
             <div className="quick-setting" data-base-ui-swipe-ignore>

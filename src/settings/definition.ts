@@ -847,10 +847,21 @@ const screensaver = group({
     options: [
       { value: "sans", label: "Mac Minimalist (SF Pro / Inter)" },
       { value: "serif", label: "Editorial Serif (Cormorant)" },
-      { value: "mono", label: "Retro Monospace" },
+      { value: "mono", label: "JetBrains Mono" },
+      { value: "pixel", label: "8-bit Retro (Pixelify)" },
     ],
     label: "Clock font",
     description: "Font style for the screensaver time and date display.",
+  }),
+  colorMode: choice({
+    default: "auto",
+    options: [
+      { value: "auto", label: "Match atmosphere (Adaptive)" },
+      { value: "white", label: "Pure white" },
+      { value: "pond", label: "Pond water tint" },
+    ],
+    label: "Clock color",
+    description: "Harmonize clock color with the pond and weather lighting.",
   }),
   position: choice({
     default: "center",

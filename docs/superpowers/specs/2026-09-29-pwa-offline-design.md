@@ -1,7 +1,7 @@
 # Nagomi PWA & Offline Functionality Design Specification
 
 ## Overview
-Transform Nagomi (milesueee-koi-pond) into a Progressive Web App (PWA) with complete offline functionality. When installed or bookmarked on any device (desktop, iOS, Android), users can open and interact with the procedural koi pond, water ripples, rain weather, lotus leaves, ambient river audio, and synthesized procedural sounds entirely offline without an active network connection.
+Transform milesueee ∙ nagomi into a Progressive Web App (PWA) with complete offline functionality. When installed or bookmarked on any device (desktop, iOS, Android), users can open and interact with the procedural koi pond, water ripples, rain weather, lotus leaves, ambient river audio, and synthesized procedural sounds entirely offline without an active network connection.
 
 ## User Goals & Requirements
 - **Installability**: Standalone web app compliant with PWA install criteria (valid manifest, service worker with fetch handler, icons, standalone display mode).

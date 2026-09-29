@@ -1,6 +1,6 @@
-# milesueee-koi-pond
+# milesueee ∙ nagomi
 
-milesueee-koi-pond is an interactive, procedurally animated koi pond that runs in your browser. The fish
+milesueee ∙ nagomi is an interactive, procedurally animated koi pond that runs in your browser. The fish
 swim on their own, change depth, react to nearby fish, and gather around the
 water when you click or tap. Ripples, currents, lotus leaves, changing weather,
 and optional river sounds help the pond feel alive.

@@ -911,7 +911,7 @@ export function App() {
           aria-hidden={uiHidden}
         >
           <header className="brand-float">
-            <h1 className="brand-wordmark">milesueee-koi-pond</h1>
+            <h1 className="brand-wordmark">milesueee ∙ nagomi</h1>
           </header>
 
             <div className="top-actions">

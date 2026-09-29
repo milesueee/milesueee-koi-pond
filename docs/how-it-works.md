@@ -1,6 +1,6 @@
-# How milesueee-koi-pond works
+# How milesueee ∙ nagomi works
 
-milesueee-koi-pond is an interactive koi pond. The fish are not videos, GIFs, or a long
+milesueee ∙ nagomi is an interactive koi pond. The fish are not videos, GIFs, or a long
 list of drawings. The program decides how they move and draws their current
 shape while it is running.
 
@@ -23,7 +23,7 @@ The computer applies these rules many times each second. The result looks
 alive because the next pose comes from the current situation, not from a
 repeating animation clip.
 
-milesueee-koi-pond is a rule-based simulation. It is not an AI model, a biological koi
+milesueee ∙ nagomi is a rule-based simulation. It is not an AI model, a biological koi
 simulation, or a complete simulation of real water.
 
 ## The short version

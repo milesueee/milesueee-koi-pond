@@ -57,6 +57,7 @@ import {
 import { AUDIO } from "./audio-config";
 import { SoundSynthesizer } from "./sound-synthesizer";
 import { ConfigEditor } from "./config-editor";
+import { ScreensaverClock } from "./screensaver-clock";
 import {
   CANVAS,
   CANVAS_HEIGHT,
@@ -104,6 +105,7 @@ const emptyStats: SceneStats = {
 };
 
 const AMBIENT_IDLE_DELAY_MS = 3500;
+const SCREENSAVER_IDLE_DELAY_MS = 10000;
 const GITHUB_REPOSITORY = "milesueee/milesueee-koi-pond";
 
 // Restores v2 (or migrates v1) localStorage settings into the store before
@@ -259,6 +261,7 @@ export function App() {
   const [showInterface, setShowInterface] = useState(true);
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientControlsVisible, setAmbientControlsVisible] = useState(true);
+  const [screensaverActive, setScreensaverActive] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [weatherMenuOpen, setWeatherMenuOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(
@@ -388,6 +391,9 @@ export function App() {
     ambientModeRef.current = active;
     setAmbientMode(active);
     setAmbientControlsVisible(true);
+    if (!active) {
+      setScreensaverActive(false);
+    }
   }, []);
 
   const toggleAmbientMode = useCallback(async () => {
@@ -554,6 +560,7 @@ export function App() {
   useEffect(() => {
     if (!ambientMode || settingsOpen || weatherMenuOpen) {
       setAmbientControlsVisible(true);
+      setScreensaverActive(false);
       return;
     }
 
@@ -563,45 +570,59 @@ export function App() {
       }
     }, AMBIENT_IDLE_DELAY_MS);
 
-    const resetIdleTimer = (): void => {
+    let screensaverTimer: number | null = window.setTimeout(() => {
+      setScreensaverActive(true);
+    }, SCREENSAVER_IDLE_DELAY_MS);
+
+    const resetIdleTimers = (): void => {
       if (idleTimer !== null) window.clearTimeout(idleTimer);
+      if (screensaverTimer !== null) window.clearTimeout(screensaverTimer);
+
       idleTimer = window.setTimeout(() => {
         if (!dockRef.current?.contains(document.activeElement)) {
           setAmbientControlsVisible(false);
         }
       }, AMBIENT_IDLE_DELAY_MS);
+
+      screensaverTimer = window.setTimeout(() => {
+        setScreensaverActive(true);
+      }, SCREENSAVER_IDLE_DELAY_MS);
     };
 
-    const revealControls = (): void => {
+    const handleUserActivity = (): void => {
       setAmbientControlsVisible(true);
-      resetIdleTimer();
+      setScreensaverActive(false);
+      resetIdleTimers();
     };
 
     const handleFocusIn = (event: FocusEvent): void => {
       setAmbientControlsVisible(true);
+      setScreensaverActive(false);
       if (dockRef.current?.contains(event.target as Node)) {
         if (idleTimer !== null) window.clearTimeout(idleTimer);
+        if (screensaverTimer !== null) window.clearTimeout(screensaverTimer);
       } else {
-        resetIdleTimer();
+        resetIdleTimers();
       }
     };
 
     const handleFocusOut = (event: FocusEvent): void => {
       if (!dockRef.current?.contains(event.relatedTarget as Node)) {
-        resetIdleTimer();
+        resetIdleTimers();
       }
     };
 
-    window.addEventListener("pointermove", revealControls);
-    window.addEventListener("pointerdown", revealControls);
-    window.addEventListener("keydown", revealControls);
+    window.addEventListener("pointermove", handleUserActivity);
+    window.addEventListener("pointerdown", handleUserActivity);
+    window.addEventListener("keydown", handleUserActivity);
     window.addEventListener("focusin", handleFocusIn);
     window.addEventListener("focusout", handleFocusOut);
     return () => {
       if (idleTimer !== null) window.clearTimeout(idleTimer);
-      window.removeEventListener("pointermove", revealControls);
-      window.removeEventListener("pointerdown", revealControls);
-      window.removeEventListener("keydown", revealControls);
+      if (screensaverTimer !== null) window.clearTimeout(screensaverTimer);
+      window.removeEventListener("pointermove", handleUserActivity);
+      window.removeEventListener("pointerdown", handleUserActivity);
+      window.removeEventListener("keydown", handleUserActivity);
       window.removeEventListener("focusin", handleFocusIn);
       window.removeEventListener("focusout", handleFocusOut);
     };
@@ -944,6 +965,7 @@ export function App() {
               {settings.live["koi-palettes"][previewFamily]?.name ?? "Koi"} family preview
             </div>
           )}
+          <ScreensaverClock active={ambientMode && screensaverActive} />
         </div>
 
         <div

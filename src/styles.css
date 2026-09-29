@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "@fontsource/cormorant-garamond";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -1384,6 +1385,124 @@ input[type="color"] {
   .stage--ambient .display {
     height: 100%;
   }
+}
+
+/* ---- screensaver clock -------------------------------------------------- */
+
+.screensaver-clock {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.97);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+  z-index: 25;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 2.5rem 3.5rem;
+  border-radius: 1.5rem;
+  background: radial-gradient(
+    circle at center,
+    rgba(7, 16, 15, 0.45) 0%,
+    rgba(7, 16, 15, 0.2) 60%,
+    transparent 100%
+  );
+  backdrop-filter: blur(2px);
+}
+
+.screensaver-clock--visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.screensaver-clock__time {
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.screensaver-clock__date {
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Serif font style (Default: Cormorant Garamond) */
+.screensaver-clock--serif {
+  font-family: "Cormorant Garamond", "Zen Old Mincho", "Shippori Mincho", "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
+.screensaver-clock--serif .screensaver-clock__time {
+  font-size: clamp(3.75rem, 10vw, 8.5rem);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 4px 32px rgba(0, 0, 0, 0.75),
+    0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.screensaver-clock--serif .screensaver-clock__date {
+  font-size: clamp(1.1rem, 2.2vw, 1.8rem);
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+  margin-top: 0.6rem;
+}
+
+/* Sans font style (Inter Ultrathin) */
+.screensaver-clock--sans {
+  font-family: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.screensaver-clock--sans .screensaver-clock__time {
+  font-size: clamp(3.5rem, 9.5vw, 8rem);
+  font-weight: 150;
+  letter-spacing: -0.02em;
+  text-shadow:
+    0 4px 28px rgba(0, 0, 0, 0.7),
+    0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.screensaver-clock--sans .screensaver-clock__date {
+  font-size: clamp(0.9rem, 1.8vw, 1.35rem);
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+  margin-top: 0.5rem;
+}
+
+/* Mono font style (Retro Monospace) */
+.screensaver-clock--mono {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+}
+
+.screensaver-clock--mono .screensaver-clock__time {
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  text-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.7),
+    0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+.screensaver-clock--mono .screensaver-clock__date {
+  font-size: clamp(0.85rem, 1.6vw, 1.25rem);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+  margin-top: 0.4rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

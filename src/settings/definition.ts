@@ -834,6 +834,36 @@ const audio = group({
   }),
 });
 
+// ---- screensaver --------------------------------------------------------
+
+const screensaver = group({
+  enabled: bool({
+    default: true,
+    label: "Screensaver clock",
+    description: "Display time and date after 10s of inactivity in fullscreen.",
+  }),
+  font: choice({
+    default: "serif",
+    options: [
+      { value: "serif", label: "Editorial Serif (Cormorant)" },
+      { value: "sans", label: "Inter Ultrathin" },
+      { value: "mono", label: "Retro Monospace" },
+    ],
+    label: "Clock font",
+    description: "Font style for the screensaver time and date display.",
+  }),
+  showSeconds: bool({
+    default: false,
+    label: "Show seconds",
+    description: "Display ticking seconds in the time readout.",
+  }),
+  format24h: bool({
+    default: false,
+    label: "24-hour time",
+    description: "Use 24-hour time format instead of 12-hour AM/PM.",
+  }),
+});
+
 // ---- root ---------------------------------------------------------------
 
 export const definition = group({
@@ -853,6 +883,7 @@ export const definition = group({
   butterflies,
   "butterfly-spawns": butterflySpawns,
   audio,
+  screensaver,
 });
 
 export type SettingsValues = ValueOf<typeof definition>;
@@ -885,6 +916,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
   { id: "duckweed", title: "Duckweed", description: "Leaf appearance and floating patches.", sectionIds: ["duckweed", "duckweed-patches"] },
   { id: "butterflies", title: "Butterflies", description: "Flight behavior, colors, and spawn points.", sectionIds: ["butterflies", "butterfly-spawns"] },
   { id: "audio", title: "Audio", description: "Background river sound and interactive sound effect volumes.", sectionIds: ["audio"] },
+  { id: "screensaver", title: "Screensaver", description: "Fullscreen idle clock and typography.", sectionIds: ["screensaver"] },
 ];
 
 export const SECTION_TITLES: Record<SectionId, string> = {
@@ -904,6 +936,7 @@ export const SECTION_TITLES: Record<SectionId, string> = {
   butterflies: "Butterflies",
   "butterfly-spawns": "Butterfly spawns",
   audio: "Audio",
+  screensaver: "Screensaver",
 };
 
 export const SECTION_DESCRIPTIONS: Record<SectionId, string> = {
@@ -923,4 +956,5 @@ export const SECTION_DESCRIPTIONS: Record<SectionId, string> = {
   butterflies: "Flight, flower visits, proportions, and colors.",
   "butterfly-spawns": "Initial position, phase, and palette per butterfly.",
   audio: "Background river recording and interactive water sound volumes.",
+  screensaver: "Fullscreen idle screensaver clock, font, and time formatting.",
 };

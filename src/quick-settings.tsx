@@ -137,6 +137,11 @@ export function QuickSettings({
   const [dipVolume, setDipVolume] = useSetting<number>(["audio", "dipVolume"]);
   const [splashVolume, setSplashVolume] = useSetting<number>(["audio", "splashVolume"]);
 
+  const [screensaverEnabled, setScreensaverEnabled] = useSetting<boolean>(["screensaver", "enabled"]);
+  const [clockFont, setClockFont] = useSetting<string>(["screensaver", "font"]);
+  const [clockSeconds, setClockSeconds] = useSetting<boolean>(["screensaver", "showSeconds"]);
+  const [clock24h, setClock24h] = useSetting<boolean>(["screensaver", "format24h"]);
+
   return (
     <div className="settings-quick">
       <section className="settings-quick__section" aria-labelledby="quick-koi-heading">
@@ -297,7 +302,7 @@ export function QuickSettings({
           <div className="settings-quick__heading-row">
             <h3 id="quick-display-heading">Display &amp; metrics</h3>
           </div>
-          <p>Real-time frame rates and device rendering metrics.</p>
+          <p>Framerate HUD and fullscreen screensaver clock.</p>
         </div>
         <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
           <div className="quick-setting__copy">
@@ -306,6 +311,47 @@ export function QuickSettings({
           </div>
           <Switch id="quick-fps" checked={debugHudOpen} onCheckedChange={onDebugHudChange} />
         </div>
+        <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
+          <div className="quick-setting__copy">
+            <Label htmlFor="quick-screensaver">Screensaver clock</Label>
+            <small>Display time and date after 10s of inactivity in fullscreen.</small>
+          </div>
+          <Switch id="quick-screensaver" checked={screensaverEnabled} onCheckedChange={(checked) => setScreensaverEnabled(checked)} />
+        </div>
+        {screensaverEnabled && (
+          <>
+            <div className="quick-setting" data-base-ui-swipe-ignore>
+              <div className="quick-setting__copy">
+                <Label htmlFor="quick-clock-font">Clock font</Label>
+                <small>Choose typographic style for time and date display.</small>
+              </div>
+              <select
+                id="quick-clock-font"
+                className="quick-setting__select"
+                value={clockFont}
+                onChange={(event) => setClockFont(event.target.value)}
+              >
+                <option value="serif">Editorial Serif (Cormorant Garamond)</option>
+                <option value="sans">Inter Ultrathin (Modern Zen)</option>
+                <option value="mono">Retro Monospace (Arcade)</option>
+              </select>
+            </div>
+            <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
+              <div className="quick-setting__copy">
+                <Label htmlFor="quick-clock-seconds">Show seconds</Label>
+                <small>Display live seconds in the clock.</small>
+              </div>
+              <Switch id="quick-clock-seconds" checked={clockSeconds} onCheckedChange={(checked) => setClockSeconds(checked)} />
+            </div>
+            <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
+              <div className="quick-setting__copy">
+                <Label htmlFor="quick-clock-24h">24-hour format</Label>
+                <small>Display time as 24-hour instead of 12-hour AM/PM.</small>
+              </div>
+              <Switch id="quick-clock-24h" checked={clock24h} onCheckedChange={(checked) => setClock24h(checked)} />
+            </div>
+          </>
+        )}
       </section>
 
       <section className="settings-quick__section" aria-labelledby="quick-audio-heading">

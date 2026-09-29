@@ -2,7 +2,11 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { App } from "./app";
+import { settings } from "./settings/store";
 import "./styles.css";
+
+// Expose settings store on window for headless automation and testing
+(window as unknown as { nagomiSettings: typeof settings }).nagomiSettings = settings;
 
 registerSW({ immediate: true });
 

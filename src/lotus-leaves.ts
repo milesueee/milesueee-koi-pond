@@ -179,6 +179,58 @@ export interface LotusGrabEndResult {
   y: number;
 }
 
+export interface LeafDriftResult {
+  driftX: number;
+  driftY: number;
+  rotationDelta: number;
+}
+
+function leafNoise(index: number, seed: number): number {
+  const n = Math.sin(index * 12.9898 + seed * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+/**
+ * Computes lively, multi-frequency fluid current drift and rotational swaying for lotus leaves.
+ * Randomizes speed, rotation cadence, direction, and trajectory per leaf for a natural, alive pond.
+ */
+export function computeLeafDrift(
+  time: number,
+  phase: number,
+  leafIndex = 0,
+  driftXScale = LOTUS.driftX,
+  driftYScale = LOTUS.driftY,
+  rotationAmount = LOTUS.rotationAmount,
+): LeafDriftResult {
+  // Deterministic individual personality per leaf
+  const speedMult = 0.75 + leafNoise(leafIndex, 1.1) * 0.7; // 0.75x to 1.45x individual speed
+  const rotDir = leafNoise(leafIndex, 2.3) > 0.5 ? 1 : -1;
+  const rotSpeedMult = 0.7 + leafNoise(leafIndex, 3.7) * 0.8;
+  const ampXMult = 0.8 + leafNoise(leafIndex, 4.2) * 0.4;
+  const ampYMult = 0.8 + leafNoise(leafIndex, 5.5) * 0.4;
+
+  // Lively primary wave frequency (~12-18s period) + secondary ripple swell (~6-9s period)
+  const t = time * speedMult;
+  const normX =
+    Math.sin(t * 0.32 + phase) * 0.72 +
+    Math.sin(t * 0.64 + phase * 2.1) * 0.28;
+
+  const normY =
+    Math.cos(t * 0.28 + phase * 1.3) * 0.72 +
+    Math.cos(t * 0.58 + phase * 0.7) * 0.28;
+
+  // Gentle angular rocking (yaw) with unique sway cadence and direction per leaf
+  const normRot =
+    (Math.sin(time * rotSpeedMult * 0.25 + phase) * 0.7 +
+     Math.sin(time * rotSpeedMult * 0.52 + phase * 1.7) * 0.3) * rotDir;
+
+  return {
+    driftX: normX * driftXScale * ampXMult,
+    driftY: normY * driftYScale * ampYMult,
+    rotationDelta: normRot * rotationAmount,
+  };
+}
+
 interface GrabbedLeafState {
   leafIndex: number;
   grabOffsetX: number;
@@ -587,11 +639,10 @@ export class LotusLeavesPass {
 
     // Dragged: compute new anchor coordinates
     const time = this.lastTime >= 0 ? this.lastTime : 0;
-    const driftX = Math.sin(time * 0.12 + leaf.phase) * LOTUS.driftX;
-    const driftY = Math.cos(time * 0.15 + leaf.phase * 1.3) * LOTUS.driftY;
+    const drift = computeLeafDrift(time, leaf.phase, grabbed.leafIndex);
 
-    const targetPlacementX = this.grabTargetX - driftX;
-    const targetPlacementY = this.grabTargetY - driftY;
+    const targetPlacementX = this.grabTargetX - drift.driftX;
+    const targetPlacementY = this.grabTargetY - drift.driftY;
 
     const rawLeafX = (targetPlacementX / CANVAS_WIDTH) * CANVAS.width;
     const rawLeafY = (targetPlacementY / CANVAS_HEIGHT) * CANVAS.height;
@@ -643,6 +694,10 @@ export class LotusLeavesPass {
     return this.grabbedLeaf ? this.grabbedLeaf.leafIndex : null;
   }
 
+  public getLeafState(leafIndex: number): Readonly<LeafPhysicsState> | null {
+    return this.physicsStates[leafIndex] ?? null;
+  }
+
   public update(time: number): void {
     const dt =
       this.lastTime < 0
@@ -663,9 +718,7 @@ export class LotusLeavesPass {
       const physics = this.physicsStates[leafIndex];
       const placement = viewportPoint(leaf.x, leaf.y);
       const isGrabbed = this.grabbedLeaf?.leafIndex === leafIndex;
-      const driftX = Math.sin(time * 0.12 + leaf.phase) * LOTUS.driftX;
-      const driftY =
-        Math.cos(time * 0.15 + leaf.phase * 1.3) * LOTUS.driftY;
+      const drift = computeLeafDrift(time, leaf.phase, leafIndex);
 
       let center: Point;
       if (isGrabbed) {
@@ -673,17 +726,15 @@ export class LotusLeavesPass {
           x: this.grabTargetX,
           y: this.grabTargetY,
         };
-        physics.displaceX = this.grabTargetX - (placement.x + driftX);
-        physics.displaceY = this.grabTargetY - (placement.y + driftY);
+        physics.displaceX = this.grabTargetX - (placement.x + drift.driftX);
+        physics.displaceY = this.grabTargetY - (placement.y + drift.driftY);
       } else {
         center = {
-          x: placement.x + driftX + physics.displaceX,
-          y: placement.y + driftY + physics.displaceY,
+          x: placement.x + drift.driftX + physics.displaceX,
+          y: placement.y + drift.driftY + physics.displaceY,
         };
       }
-      const angle =
-        leaf.angle +
-        Math.sin(time * 0.085 + leaf.phase) * LOTUS.rotationAmount;
+      const angle = leaf.angle + drift.rotationDelta;
       const baseRadius =
         leaf.radius *
         LOTUS.radiusScale *
@@ -714,16 +765,21 @@ export class LotusLeavesPass {
 
       for (const flower of visibleFlowers) {
         if (flower.leafIndex !== leafIndex) continue;
+        // Anchor flower relative to the rotated leaf surface
+        const cosR = Math.cos(drift.rotationDelta);
+        const sinR = Math.sin(drift.rotationDelta);
+        const rotOffsetX = flower.offsetX * cosR - flower.offsetY * sinR;
+        const rotOffsetY = flower.offsetX * sinR + flower.offsetY * cosR;
+
         this.drawFlower(
           {
-            x: center.x + flower.offsetX,
-            y: center.y + flower.offsetY,
+            x: center.x + rotOffsetX,
+            y: center.y + rotOffsetY,
           },
           flower.radius *
             LOTUS.flowerRadiusScale *
             Math.max(0.7, 1 - physics.dip * 0.05),
-          flower.rotation +
-            Math.sin(time * 0.12 + leaf.phase) * 0.04,
+          flower.rotation + drift.rotationDelta,
           FLOWER_PALETTES[
             ((flower.palette % FLOWER_PALETTES.length) +
               FLOWER_PALETTES.length) %

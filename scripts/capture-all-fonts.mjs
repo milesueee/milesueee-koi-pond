@@ -1,7 +1,23 @@
 import { chromium } from "playwright";
 import path from "node:path";
+import fs from "node:fs";
 
 const ARTIFACT_DIR = "C:\\Users\\Eda Jane Parao\\.gemini\\antigravity-ide\\brain\\4a2e566b-589c-4c7d-a092-beddd2453d13";
+
+async function safeSaveScreenshot(page, filename) {
+  const targetPath = path.join(ARTIFACT_DIR, filename);
+  const buffer = await page.screenshot({ type: "png" });
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      fs.writeFileSync(targetPath, buffer);
+      console.log(`Saved: ${targetPath}`);
+      return;
+    } catch (err) {
+      if (attempt === 4) throw err;
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  }
+}
 
 async function main() {
   const browser = await chromium.launch({ headless: true });
@@ -14,87 +30,72 @@ async function main() {
   console.log("Navigating to http://localhost:5174...");
   await page.goto("http://localhost:5174", { waitUntil: "networkidle" });
   await page.waitForSelector("#pond");
+  
+  // Wait for all fonts (including Silkscreen, DotGothic16, VT323) to load
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(1000);
 
   // Enter Ambient Mode
   console.log("Clicking Ambient button to enter Ambient Mode...");
   const ambientBtn = page.locator(".control-button--ambient");
   await ambientBtn.click();
-  await page.waitForTimeout(500);
-
-  console.log("Waiting 10.5 seconds for screensaver clock to activate...");
-  await page.waitForTimeout(10500);
-  await page.waitForSelector(".screensaver-clock--visible", { timeout: 3000 });
-
-  const setClockFont = async (fontClass) => {
-    await page.evaluate((cls) => {
-      const clock = document.querySelector(".screensaver-clock");
-      if (clock) {
-        clock.classList.remove(
-          "screensaver-clock--sans",
-          "screensaver-clock--serif",
-          "screensaver-clock--mono",
-          "screensaver-clock--pixel"
-        );
-        clock.classList.add(cls);
-      }
-    }, fontClass);
-    await page.waitForTimeout(500);
-  };
-
-  // 1. Capture Mac Minimalist (Sans)
-  console.log("Capturing 1. Mac Minimalist (Sans)...");
-  await setClockFont("screensaver-clock--sans");
-  const sansPath = path.join(ARTIFACT_DIR, "screensaver_font_sans.png");
-  await page.screenshot({ path: sansPath });
-  console.log(`Saved: ${sansPath}`);
-
-  // 2. Capture Editorial Serif (Cormorant Garamond)
-  console.log("Capturing 2. Editorial Serif (Cormorant Garamond)...");
-  await setClockFont("screensaver-clock--serif");
-  const serifPath = path.join(ARTIFACT_DIR, "screensaver_font_serif.png");
-  await page.screenshot({ path: serifPath });
-  console.log(`Saved: ${serifPath}`);
-
-  // 3. Capture JetBrains Mono
-  console.log("Capturing 3. JetBrains Mono...");
-  await setClockFont("screensaver-clock--mono");
-  const monoPath = path.join(ARTIFACT_DIR, "screensaver_font_mono.png");
-  await page.screenshot({ path: monoPath });
-  console.log(`Saved: ${monoPath}`);
-
-  // 4. Capture 8-bit Retro (Pixelify Sans)
-  console.log("Capturing 4. 8-bit Retro (Pixelify Sans)...");
-  await setClockFont("screensaver-clock--pixel");
-  const pixelPath = path.join(ARTIFACT_DIR, "screensaver_font_pixel.png");
-  await page.screenshot({ path: pixelPath });
-  console.log(`Saved: ${pixelPath}`);
-
-  // 5. Demonstrate sunset atmospheric accent matching
-  console.log("Capturing 5. Sunset Weather Atmosphere Accent Matching...");
   await page.evaluate(() => {
-    // Dispatch weather change or simulate sunset accent on clock
-    const clock = document.querySelector(".screensaver-clock");
-    if (clock) {
-      clock.classList.remove(
-        "screensaver-clock--sans",
-        "screensaver-clock--serif",
-        "screensaver-clock--mono",
-        "screensaver-clock--pixel"
-      );
-      clock.classList.add("screensaver-clock--sans");
-      clock.style.setProperty("--clock-color", "rgba(255, 232, 216, 0.98)");
-      clock.style.setProperty("--clock-date-color", "rgba(255, 206, 182, 0.92)");
-      clock.style.setProperty("--clock-glow", "rgba(255, 105, 40, 0.55)");
+    if (document.activeElement && typeof document.activeElement.blur === "function") {
+      document.activeElement.blur();
     }
   });
-  await page.waitForTimeout(400);
-  const sunsetPath = path.join(ARTIFACT_DIR, "screensaver_sunset_adaptive.png");
-  await page.screenshot({ path: sunsetPath });
-  console.log(`Saved: ${sunsetPath}`);
+
+  console.log("Waiting 11 seconds for controls to hide and screensaver clock to activate...");
+  await page.waitForTimeout(11000);
+  await page.waitForSelector(".screensaver-clock--visible", { timeout: 4000 });
+
+  // 1. Capture Silkscreen (Cozy Pixel HUD)
+  console.log("Capturing 1. Silkscreen (Handheld / Game Boy UI)...");
+  await page.evaluate(() => {
+    window.nagomiSettings.setWeather("sunny");
+    window.nagomiSettings.set(["screensaver", "style"], "pixel-hud");
+    window.nagomiSettings.set(["screensaver", "font"], "silkscreen");
+    window.nagomiSettings.set(["screensaver", "position"], "bottom-right");
+  });
+  await page.waitForTimeout(700);
+  await safeSaveScreenshot(page, "screensaver_font_silkscreen.png");
+
+  // 2. Capture DotGothic16 (16-bit Japanese Retro RPG)
+  console.log("Capturing 2. DotGothic16 (16-bit Japanese Retro RPG)...");
+  await page.evaluate(() => {
+    window.nagomiSettings.set(["screensaver", "font"], "dotgothic");
+  });
+  await page.waitForTimeout(700);
+  await safeSaveScreenshot(page, "screensaver_font_dotgothic.png");
+
+  // 3. Capture VT323 (Retro Terminal)
+  console.log("Capturing 3. VT323 (Retro Terminal)...");
+  await page.evaluate(() => {
+    window.nagomiSettings.set(["screensaver", "font"], "vt323");
+  });
+  await page.waitForTimeout(700);
+  await safeSaveScreenshot(page, "screensaver_font_vt323.png");
+
+  // 4. Capture Silkscreen in Sunset Atmosphere
+  console.log("Capturing 4. Silkscreen in Sunset Atmosphere...");
+  await page.evaluate(() => {
+    window.nagomiSettings.setWeather("sunset");
+    window.nagomiSettings.set(["screensaver", "font"], "silkscreen");
+  });
+  await page.waitForTimeout(700);
+  await safeSaveScreenshot(page, "screensaver_font_silkscreen_sunset.png");
+
+  // 5. Capture DotGothic16 in Moonlight Atmosphere
+  console.log("Capturing 5. DotGothic16 in Moonlight Atmosphere...");
+  await page.evaluate(() => {
+    window.nagomiSettings.setWeather("moonlight");
+    window.nagomiSettings.set(["screensaver", "font"], "dotgothic");
+  });
+  await page.waitForTimeout(700);
+  await safeSaveScreenshot(page, "screensaver_font_dotgothic_moonlight.png");
 
   await browser.close();
-  console.log("Captured all screenshots successfully!");
+  console.log("All pixel font comparison screenshots captured successfully!");
 }
 
 main().catch((err) => {

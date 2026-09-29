@@ -13,6 +13,7 @@ import {
   SurfaceGeometryBatch,
   type SurfacePoint,
 } from "./surface-geometry";
+import { computeLeafDrift } from "./lotus-leaves";
 
 type ButterflyState = "wander" | "approach" | "orbit" | "rest";
 
@@ -482,15 +483,14 @@ export class ButterflyPass {
     if (!flower) return { x: CANVAS_WIDTH * 0.5, y: CANVAS_HEIGHT * 0.5 };
     const leaf = LOTUS_LEAVES[flower.leafIndex];
     const placement = viewportPoint(leaf.x, leaf.y);
+    const drift = computeLeafDrift(time, leaf.phase, flower.leafIndex);
+    const cosR = Math.cos(drift.rotationDelta);
+    const sinR = Math.sin(drift.rotationDelta);
+    const rotOffsetX = flower.offsetX * cosR - flower.offsetY * sinR;
+    const rotOffsetY = flower.offsetX * sinR + flower.offsetY * cosR;
     return {
-      x:
-        placement.x +
-        Math.sin(time * 0.12 + leaf.phase) * LOTUS.driftX +
-        flower.offsetX,
-      y:
-        placement.y +
-        Math.cos(time * 0.15 + leaf.phase * 1.3) * LOTUS.driftY +
-        flower.offsetY,
+      x: placement.x + drift.driftX + rotOffsetX,
+      y: placement.y + drift.driftY + rotOffsetY,
     };
   }
 

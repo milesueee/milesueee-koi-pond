@@ -71,7 +71,7 @@ import { useIsMobile } from "./hooks/use-mobile";
 import { clamp, vec, type Vec2 } from "./math";
 import { connectSettingsEffects } from "./settings/effects";
 import { connectPersistence, loadInto } from "./settings/persistence";
-import { useSettingsMeta } from "./settings/react";
+import { useSetting, useSettingsMeta } from "./settings/react";
 import { settings } from "./settings/store";
 import type { SectionId } from "./settings/definition";
 import { School } from "./school";
@@ -119,16 +119,34 @@ function pondRenderSize(display: HTMLElement): { width: number; height: number }
     window.matchMedia("(max-width: 700px) and (orientation: portrait)").matches &&
     width > 0 &&
     height > 0;
-  if (!portrait) return { width: CANVAS.width, height: CANVAS.height };
+  if (portrait) {
+    const renderWidth = Math.min(
+      CANVAS.width,
+      Math.max(CANVAS.height, Math.round(width * 0.7)),
+    );
+    return {
+      width: renderWidth,
+      height: Math.max(CANVAS.height, Math.round((renderWidth * height) / width)),
+    };
+  }
 
-  const renderWidth = Math.min(
-    CANVAS.width,
-    Math.max(CANVAS.height, Math.round(width * 0.7)),
-  );
-  return {
-    width: renderWidth,
-    height: Math.max(CANVAS.height, Math.round((renderWidth * height) / width)),
-  };
+  const mobileLandscape =
+    window.matchMedia("(orientation: landscape) and (max-height: 600px)").matches &&
+    width > 0 &&
+    height > 0;
+  if (mobileLandscape) {
+    const renderHeight = CANVAS.height;
+    const renderWidth = Math.max(
+      CANVAS.width,
+      Math.round((renderHeight * width) / height),
+    );
+    return {
+      width: renderWidth,
+      height: renderHeight,
+    };
+  }
+
+  return { width: CANVAS.width, height: CANVAS.height };
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -267,6 +285,10 @@ export function App() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(
     AUDIO.defaultEnabled,
   );
+  const [displayWhenUiHidden] = useSetting<boolean>([
+    "screensaver",
+    "displayWhenUiHidden",
+  ]);
   const settingsMeta = useSettingsMeta();
   const { weather: weatherPreset, rain: rainEnabled, canUndo } = settingsMeta;
   const [selectedFamily, setSelectedFamily] = useState(0);
@@ -965,7 +987,14 @@ export function App() {
               {settings.live["koi-palettes"][previewFamily]?.name ?? "Koi"} family preview
             </div>
           )}
-          <ScreensaverClock active={ambientMode && screensaverActive} />
+          <ScreensaverClock
+            active={
+              !settingsOpen &&
+              !weatherMenuOpen &&
+              ((ambientMode && screensaverActive) ||
+                (Boolean(displayWhenUiHidden) && uiHidden))
+            }
+          />
         </div>
 
         <div

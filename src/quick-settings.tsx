@@ -138,6 +138,8 @@ export function QuickSettings({
   const [splashVolume, setSplashVolume] = useSetting<number>(["audio", "splashVolume"]);
 
   const [screensaverEnabled, setScreensaverEnabled] = useSetting<boolean>(["screensaver", "enabled"]);
+  const [clockDisplayWhenUiHidden, setClockDisplayWhenUiHidden] = useSetting<boolean>(["screensaver", "displayWhenUiHidden"]);
+  const [clockStyle, setClockStyle] = useSetting<string>(["screensaver", "style"]);
   const [clockFont, setClockFont] = useSetting<string>(["screensaver", "font"]);
   const [clockColorMode, setClockColorMode] = useSetting<string>(["screensaver", "colorMode"]);
   const [clockPosition, setClockPosition] = useSetting<string>(["screensaver", "position"]);
@@ -323,6 +325,29 @@ export function QuickSettings({
         </div>
         {screensaverEnabled && (
           <>
+            <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
+              <div className="quick-setting__copy">
+                <Label htmlFor="quick-clock-ui-hidden">Show when UI is hidden</Label>
+                <small>Display the clock whenever UI is hidden (via Hide UI button or H key), not just fullscreen.</small>
+              </div>
+              <Switch id="quick-clock-ui-hidden" checked={clockDisplayWhenUiHidden} onCheckedChange={(checked) => setClockDisplayWhenUiHidden(checked)} />
+            </div>
+            <div className="quick-setting" data-base-ui-swipe-ignore>
+              <div className="quick-setting__copy">
+                <Label htmlFor="quick-clock-style">Clock style</Label>
+                <small>Visual container and framing style for the clock.</small>
+              </div>
+              <select
+                id="quick-clock-style"
+                className="quick-setting__select"
+                value={clockStyle}
+                onChange={(event) => setClockStyle(event.target.value)}
+              >
+                <option value="pixel-hud">Cozy Pixel HUD (Retro Game)</option>
+                <option value="zen-pill">Zen Minimalist Pill (Frosted Glass)</option>
+                <option value="compact-card">Compact Stacked Card</option>
+              </select>
+            </div>
             <div className="quick-setting" data-base-ui-swipe-ignore>
               <div className="quick-setting__copy">
                 <Label htmlFor="quick-clock-font">Clock font</Label>
@@ -331,13 +356,19 @@ export function QuickSettings({
               <select
                 id="quick-clock-font"
                 className="quick-setting__select"
-                value={clockFont}
+                value={clockFont === "pixel" ? "silkscreen" : clockFont}
                 onChange={(event) => setClockFont(event.target.value)}
               >
-                <option value="sans">Mac Minimalist (SF Pro / Inter)</option>
-                <option value="serif">Editorial Serif (Cormorant Garamond)</option>
-                <option value="mono">JetBrains Mono</option>
-                <option value="pixel">8-bit Retro (Pixelify)</option>
+                <optgroup label="Pixel Fonts">
+                  <option value="silkscreen">Silkscreen (Game Boy / Handheld UI)</option>
+                  <option value="dotgothic">DotGothic16 (16-bit Japanese RPG)</option>
+                  <option value="vt323">VT323 (Retro Terminal)</option>
+                </optgroup>
+                <optgroup label="Modern Typography">
+                  <option value="mono">JetBrains Mono (Developer Clean)</option>
+                  <option value="sans">Mac Minimalist (SF Pro / Inter)</option>
+                  <option value="serif">Editorial Serif (Cormorant Garamond)</option>
+                </optgroup>
               </select>
             </div>
             <div className="quick-setting" data-base-ui-swipe-ignore>

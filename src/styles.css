@@ -4,7 +4,10 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource/cormorant-garamond";
 @import "@fontsource/jetbrains-mono";
-@import "@fontsource/pixelify-sans";
+@import "@fontsource/silkscreen";
+@import "@fontsource/silkscreen/700.css";
+@import "@fontsource/dotgothic16";
+@import "@fontsource/vt323";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -1389,6 +1392,114 @@ input[type="color"] {
   }
 }
 
+@media (orientation: landscape) and (max-height: 600px) {
+  .stage {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .pond-shell {
+    position: relative;
+    display: block;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+  }
+
+  .display {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100vw;
+    max-height: 100dvh;
+    aspect-ratio: auto;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  #pond {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+  }
+
+  .pond-ui {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin: 0;
+    padding: max(0.4rem, env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right)) 0 max(0.6rem, env(safe-area-inset-left));
+    pointer-events: none;
+  }
+
+  .pond-ui > * {
+    pointer-events: auto;
+  }
+
+  .brand-float {
+    position: static;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .top-actions {
+    position: static;
+  }
+
+  .control-dock {
+    position: absolute;
+    bottom: max(0.45rem, env(safe-area-inset-bottom));
+    left: 50%;
+    z-index: 5;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+    width: max-content;
+    max-width: calc(100vw - max(1.5rem, calc(env(safe-area-inset-left) + env(safe-area-inset-right))));
+    margin: 0;
+    transform: translateX(-50%);
+    pointer-events: auto;
+  }
+
+  .control-dock--hidden {
+    transform: translate(-50%, calc(100% + 1rem)) !important;
+  }
+
+  .control-group--environment {
+    display: flex;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .control-dock > .control-divider {
+    display: block;
+  }
+
+  .stage--ambient .pond-shell {
+    width: 100vw;
+    height: 100dvh;
+  }
+
+  .stage--ambient .display {
+    width: 100%;
+    height: 100%;
+  }
+
+  .settings-drawer {
+    --drawer-content-height: 100dvh;
+    --drawer-content-max-height: 100dvh;
+    --drawer-content-width: min(24rem, 80vw);
+  }
+}
+
 /* ---- screensaver clock -------------------------------------------------- */
 
 .screensaver-clock {
@@ -1436,7 +1547,7 @@ input[type="color"] {
 }
 
 .screensaver-clock--pos-top-center {
-  top: 8%;
+  top: 2.5rem;
   left: 50%;
   right: auto;
   bottom: auto;
@@ -1448,8 +1559,8 @@ input[type="color"] {
 }
 
 .screensaver-clock--pos-top-left {
-  top: 7%;
-  left: 5%;
+  top: 2.25rem;
+  left: 2.5rem;
   right: auto;
   bottom: auto;
   --clock-tx: 0;
@@ -1460,8 +1571,8 @@ input[type="color"] {
 }
 
 .screensaver-clock--pos-top-right {
-  top: 7%;
-  right: 5%;
+  top: 2.25rem;
+  right: 2.5rem;
   left: auto;
   bottom: auto;
   --clock-tx: 0;
@@ -1472,7 +1583,7 @@ input[type="color"] {
 }
 
 .screensaver-clock--pos-bottom-center {
-  bottom: 12%;
+  bottom: 2.5rem;
   top: auto;
   left: 50%;
   right: auto;
@@ -1484,9 +1595,9 @@ input[type="color"] {
 }
 
 .screensaver-clock--pos-bottom-left {
-  bottom: 9%;
+  bottom: 2.25rem;
   top: auto;
-  left: 5%;
+  left: 2.5rem;
   right: auto;
   --clock-tx: 0;
   --clock-ty: 0;
@@ -1496,9 +1607,9 @@ input[type="color"] {
 }
 
 .screensaver-clock--pos-bottom-right {
-  bottom: 9%;
+  bottom: 2.25rem;
   top: auto;
-  right: 5%;
+  right: 2.5rem;
   left: auto;
   --clock-tx: 0;
   --clock-ty: 0;
@@ -1507,64 +1618,202 @@ input[type="color"] {
   text-align: right;
 }
 
-.screensaver-clock__time {
-  line-height: 0.92;
-  color: var(--clock-color, #ffffff);
+/* Base icon styling */
+.screensaver-clock__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--clock-glow, rgba(255, 255, 255, 0.85));
+  filter: drop-shadow(0 0 6px var(--clock-glow, rgba(0, 0, 0, 0.4)));
 }
 
-.screensaver-clock__date {
-  line-height: 1.25;
+/* -------------------------------------------------------------
+   Style 1: Cozy Pixel HUD (Retro Japanese Game UI) - Default
+   ------------------------------------------------------------- */
+.screensaver-clock--style-pixel-hud .screensaver-clock__container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.55rem 0.85rem 0.5rem;
+  background: rgba(14, 22, 26, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid var(--clock-color, #ffffff);
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.75),
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 16px var(--clock-glow, rgba(0, 0, 0, 0.35));
+  image-rendering: pixelated;
+}
+
+.screensaver-clock--style-pixel-hud .screensaver-clock__header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--clock-date-color, rgba(255, 255, 255, 0.88));
-  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-/* Sans font style (Default: Mac Minimalist SF Pro / Inter) */
+.screensaver-clock--style-pixel-hud .screensaver-clock__time {
+  font-size: clamp(1.65rem, 2.9vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  color: var(--clock-color, #ffffff);
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.9);
+}
+
+/* -------------------------------------------------------------
+   Style 2: Zen Minimalist Pill (Frosted Glass Pill)
+   ------------------------------------------------------------- */
+.screensaver-clock--style-zen-pill .screensaver-clock__container {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 1.15rem;
+  background: rgba(18, 26, 30, 0.48);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.35),
+    0 0 12px var(--clock-glow, rgba(0, 0, 0, 0.25));
+}
+
+.screensaver-clock--style-zen-pill .screensaver-clock__pill-content {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  white-space: nowrap;
+}
+
+.screensaver-clock--style-zen-pill .screensaver-clock__date {
+  font-size: 0.92rem;
+  font-weight: 450;
+  color: var(--clock-date-color, rgba(255, 255, 255, 0.88));
+  line-height: 1;
+}
+
+.screensaver-clock--style-zen-pill .screensaver-clock__divider {
+  color: var(--clock-date-color, rgba(255, 255, 255, 0.5));
+  opacity: 0.45;
+  font-size: 1rem;
+}
+
+.screensaver-clock--style-zen-pill .screensaver-clock__time {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--clock-color, #ffffff);
+  line-height: 1;
+  text-shadow: 0 1px 8px var(--clock-glow, rgba(0, 0, 0, 0.35));
+}
+
+/* -------------------------------------------------------------
+   Style 3: Compact Stacked Card
+   ------------------------------------------------------------- */
+.screensaver-clock--style-compact-card .screensaver-clock__container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 1.1rem 0.7rem;
+  background: rgba(16, 24, 28, 0.56);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.4),
+    0 0 16px var(--clock-glow, rgba(0, 0, 0, 0.3));
+}
+
+.screensaver-clock--style-compact-card .screensaver-clock__header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  color: var(--clock-date-color, rgba(255, 255, 255, 0.88));
+  line-height: 1;
+}
+
+.screensaver-clock--style-compact-card .screensaver-clock__time {
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--clock-color, #ffffff);
+  text-shadow: 0 2px 14px var(--clock-glow, rgba(0, 0, 0, 0.45));
+}
+
+/* -------------------------------------------------------------
+   Typography Font Variants
+   ------------------------------------------------------------- */
+
+/* Silkscreen (Game Boy / Handheld UI - Default Pixel) */
+.screensaver-clock--silkscreen,
+.screensaver-clock--pixel {
+  font-family: "Silkscreen", monospace;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: none;
+}
+
+/* DotGothic16 (16-bit Japanese Retro RPG) */
+.screensaver-clock--dotgothic {
+  font-family: "DotGothic16", monospace;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: none;
+}
+
+/* VT323 (Retro Terminal) */
+.screensaver-clock--vt323 {
+  font-family: "VT323", monospace;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: none;
+}
+
+.screensaver-clock--silkscreen .screensaver-clock__time,
+.screensaver-clock--pixel .screensaver-clock__time,
+.screensaver-clock--dotgothic .screensaver-clock__time,
+.screensaver-clock--vt323 .screensaver-clock__time {
+  font-weight: 400 !important;
+  -webkit-font-smoothing: none;
+}
+
+.screensaver-clock--silkscreen .screensaver-clock__date,
+.screensaver-clock--pixel .screensaver-clock__date,
+.screensaver-clock--dotgothic .screensaver-clock__date,
+.screensaver-clock--vt323 .screensaver-clock__date {
+  font-weight: 400 !important;
+  -webkit-font-smoothing: none;
+}
+
+.screensaver-clock--vt323.screensaver-clock--style-pixel-hud .screensaver-clock__time {
+  font-size: clamp(2.1rem, 3.6vw, 3.1rem);
+  letter-spacing: 0.05em;
+}
+
+/* Sans font style (Mac Minimalist SF Pro / Inter) */
 .screensaver-clock--sans {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Inter Variable", Inter, system-ui, sans-serif;
 }
 
-.screensaver-clock--sans .screensaver-clock__date {
-  font-size: clamp(1.1rem, 2.4vw, 1.85rem);
-  font-weight: 500;
-  letter-spacing: -0.015em;
-  text-transform: none;
-  text-shadow:
-    0 2px 14px var(--clock-glow, rgba(0, 0, 0, 0.6)),
-    0 1px 2px rgba(0, 0, 0, 0.85);
-}
-
-.screensaver-clock--sans .screensaver-clock__time {
-  font-size: clamp(4.5rem, 13vw, 11rem);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  text-shadow:
-    0 4px 36px var(--clock-glow, rgba(0, 0, 0, 0.6)),
-    0 1px 4px rgba(0, 0, 0, 0.85);
-}
-
 /* Serif font style (Editorial Serif: Cormorant Garamond) */
 .screensaver-clock--serif {
-  font-family: "Cormorant Garamond", "Zen Old Mincho", "Shippori Mincho", "Playfair Display", Georgia, "Times New Roman", serif;
+  font-family: "Cormorant Garamond", "Zen Old Mincho", "Shippori Mincho", "Playfair Display", Georgia, serif;
 }
 
 .screensaver-clock--serif .screensaver-clock__date {
-  font-size: clamp(1.15rem, 2.4vw, 1.85rem);
   font-style: italic;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  text-shadow:
-    0 2px 16px var(--clock-glow, rgba(0, 0, 0, 0.7)),
-    0 1px 2px rgba(0, 0, 0, 0.85);
-  margin-bottom: 0.35rem;
-}
-
-.screensaver-clock--serif .screensaver-clock__time {
-  font-size: clamp(4.25rem, 12vw, 10rem);
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  text-shadow:
-    0 4px 32px var(--clock-glow, rgba(0, 0, 0, 0.75)),
-    0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 /* Mono font style (JetBrains Mono) */
@@ -1572,52 +1821,8 @@ input[type="color"] {
   font-family: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
 }
 
-.screensaver-clock--mono .screensaver-clock__date {
-  font-size: clamp(0.95rem, 2vw, 1.45rem);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-shadow:
-    0 2px 14px var(--clock-glow, rgba(0, 0, 0, 0.6)),
-    0 1px 2px rgba(0, 0, 0, 0.85);
-  margin-bottom: 0.35rem;
-}
-
 .screensaver-clock--mono .screensaver-clock__time {
-  font-size: clamp(3.75rem, 11vw, 9rem);
-  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  text-shadow:
-    0 4px 32px var(--clock-glow, rgba(0, 0, 0, 0.6)),
-    0 1px 3px rgba(0, 0, 0, 0.85);
-}
-
-/* Pixel font style (8-bit Retro: Pixelify Sans) */
-.screensaver-clock--pixel {
-  font-family: "Pixelify Sans", "DotGothic16", monospace;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
-.screensaver-clock--pixel .screensaver-clock__date {
-  font-size: clamp(1rem, 2.1vw, 1.55rem);
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-shadow:
-    0 2px 12px var(--clock-glow, rgba(0, 0, 0, 0.6)),
-    2px 2px 0px rgba(0, 0, 0, 0.75);
-  margin-bottom: 0.25rem;
-}
-
-.screensaver-clock--pixel .screensaver-clock__time {
-  font-size: clamp(4rem, 12vw, 9.5rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 0.95;
-  text-shadow:
-    0 4px 32px var(--clock-glow, rgba(0, 0, 0, 0.6)),
-    3px 3px 0px rgba(0, 0, 0, 0.85);
 }
 
 @media (prefers-reduced-motion: reduce) {

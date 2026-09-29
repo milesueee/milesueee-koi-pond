@@ -1038,6 +1038,12 @@ export function App() {
                     previewFamily={previewFamily}
                     onFamilyChange={changeFamily}
                     onPreviewFamilyChange={setFamilyPreview}
+                    debugHudOpen={debugHudOpen}
+                    onDebugHudChange={(open) => {
+                      setDebugHudOpen(open);
+                      debugHudOpenRef.current = open;
+                      if (runtimeRef.current) runtimeRef.current.showDebug = open;
+                    }}
                   />
                 </div>
                 <DrawerFooter className="settings-drawer__footer">

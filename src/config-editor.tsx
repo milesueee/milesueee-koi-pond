@@ -27,6 +27,8 @@ interface ConfigEditorProps {
   previewFamily: number | null;
   onFamilyChange: (index: number) => void;
   onPreviewFamilyChange: (index: number | null) => void;
+  debugHudOpen: boolean;
+  onDebugHudChange: (open: boolean) => void;
 }
 
 const prettify = (value: string): string =>
@@ -374,6 +376,8 @@ export const ConfigEditor = memo(function ConfigEditor({
   previewFamily,
   onFamilyChange,
   onPreviewFamilyChange,
+  debugHudOpen,
+  onDebugHudChange,
 }: ConfigEditorProps) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const normalizedQuery = query.trim().toLowerCase();
@@ -403,6 +407,8 @@ export const ConfigEditor = memo(function ConfigEditor({
           previewFamily={previewFamily}
           onFamilyChange={onFamilyChange}
           onPreviewFamilyChange={onPreviewFamilyChange}
+          debugHudOpen={debugHudOpen}
+          onDebugHudChange={onDebugHudChange}
         />
       )}
       <details

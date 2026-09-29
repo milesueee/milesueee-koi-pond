@@ -21,6 +21,8 @@ interface QuickSettingsProps {
   previewFamily: number | null;
   onFamilyChange: (index: number) => void;
   onPreviewFamilyChange: (index: number | null) => void;
+  debugHudOpen: boolean;
+  onDebugHudChange: (open: boolean) => void;
 }
 
 const formatPercent = (v: number): string => `${Math.round(v * 100)}%`;
@@ -106,6 +108,8 @@ export function QuickSettings({
   previewFamily,
   onFamilyChange,
   onPreviewFamilyChange,
+  debugHudOpen,
+  onDebugHudChange,
 }: QuickSettingsProps) {
   const paletteIndex = selectedFamily;
   const palettes = settings.live["koi-palettes"];
@@ -285,6 +289,22 @@ export function QuickSettings({
             <small>Play the gentle background recording. Off by default.</small>
           </div>
           <Switch id="quick-sound" checked={soundEnabled} onCheckedChange={onSoundChange} />
+        </div>
+      </section>
+
+      <section className="settings-quick__section" aria-labelledby="quick-display-heading">
+        <div className="settings-quick__heading">
+          <div className="settings-quick__heading-row">
+            <h3 id="quick-display-heading">Display &amp; metrics</h3>
+          </div>
+          <p>Real-time frame rates and device rendering metrics.</p>
+        </div>
+        <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
+          <div className="quick-setting__copy">
+            <Label htmlFor="quick-fps">Show FPS &amp; metrics HUD</Label>
+            <small>Live overlay with FPS, frametime, resolution, and fish count. (Hotkey: D)</small>
+          </div>
+          <Switch id="quick-fps" checked={debugHudOpen} onCheckedChange={onDebugHudChange} />
         </div>
       </section>
 

@@ -6,4 +6,11 @@ export const AUDIO = {
     source: "audio/ambient-river-v1.m4a",
     volume: 0.3,
   },
+  effects: {
+    volume: 0.22,
+    waterDropVolume: 0.2,
+    waterRippleVolume: 0.16,
+    waterDipVolume: 0.24,
+    waterSplashVolume: 0.18,
+  },
 } as const;

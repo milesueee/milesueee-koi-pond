@@ -130,7 +130,16 @@ export class RippleSystem {
       }
     }
 
-    if (activeOfType >= maximumActive) return oldestOfType;
+    if (activeOfType >= maximumActive) {
+      if (
+        available &&
+        oldestOfType &&
+        oldestOfType.age < RIPPLES.types[type].lifetime * 0.75
+      ) {
+        return available;
+      }
+      return oldestOfType;
+    }
     if (available) return available;
 
     let replacement: RippleInstance | undefined;

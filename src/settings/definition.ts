@@ -4,6 +4,7 @@
 // Section ids match the old RUNTIME_CONFIG_SECTIONS ids exactly, so v1
 // localStorage data migrates cleanly (see settings/persistence.ts).
 
+import { AUDIO } from "../audio-config";
 import {
   bool,
   choice,
@@ -780,6 +781,59 @@ const butterflySpawns = collection(butterflySpawnItem, [
   },
 });
 
+// ---- audio --------------------------------------------------------------
+
+const audio = group({
+  ambientVolume: num({
+    default: AUDIO.ambient.volume,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    label: "River sound volume",
+    description: "Volume of the background ambient river stream.",
+  }),
+  effectsVolume: num({
+    default: AUDIO.effects.volume,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    label: "Sound effects volume",
+    description: "Master volume of all interactive water sounds.",
+  }),
+  dropVolume: num({
+    default: AUDIO.effects.waterDropVolume,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    label: "Water drop volume",
+    description: "Volume of water drops and pond tap impacts.",
+  }),
+  rippleVolume: num({
+    default: AUDIO.effects.waterRippleVolume,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    label: "Water ripple volume",
+    description: "Volume of water lapping and surface ripple trails.",
+  }),
+  dipVolume: num({
+    default: AUDIO.effects.waterDipVolume,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    label: "Lotus pad dip volume",
+    description: "Volume of lotus pad submerged gloops and presses.",
+  }),
+  splashVolume: num({
+    default: AUDIO.effects.waterSplashVolume,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    label: "Water splash volume",
+    description: "Volume of fish scattering and pad release splashes.",
+  }),
+});
+
 // ---- root ---------------------------------------------------------------
 
 export const definition = group({
@@ -798,6 +852,7 @@ export const definition = group({
   "duckweed-patches": duckweedPatches,
   butterflies,
   "butterfly-spawns": butterflySpawns,
+  audio,
 });
 
 export type SettingsValues = ValueOf<typeof definition>;
@@ -811,6 +866,7 @@ export type LotusLeafSetting = ValueOf<typeof lotusLeafItem>;
 export type LotusFlowerSetting = ValueOf<typeof lotusFlowerItem>;
 export type DuckweedPatchSetting = ValueOf<typeof duckweedPatchItem>;
 export type ButterflySpawnSetting = ValueOf<typeof butterflySpawnItem>;
+export type AudioSetting = ValueOf<typeof audio>;
 export type Rgb = readonly [number, number, number];
 
 // Section-group labels used by the advanced-controls UI (was CONFIG_GROUPS).
@@ -828,6 +884,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
   { id: "lotus", title: "Lotus", description: "Leaves, flowers, palettes, and placement.", sectionIds: ["lotus", "lotus-leaves", "lotus-flowers"] },
   { id: "duckweed", title: "Duckweed", description: "Leaf appearance and floating patches.", sectionIds: ["duckweed", "duckweed-patches"] },
   { id: "butterflies", title: "Butterflies", description: "Flight behavior, colors, and spawn points.", sectionIds: ["butterflies", "butterfly-spawns"] },
+  { id: "audio", title: "Audio", description: "Background river sound and interactive sound effect volumes.", sectionIds: ["audio"] },
 ];
 
 export const SECTION_TITLES: Record<SectionId, string> = {
@@ -846,6 +903,7 @@ export const SECTION_TITLES: Record<SectionId, string> = {
   "duckweed-patches": "Duckweed patches",
   butterflies: "Butterflies",
   "butterfly-spawns": "Butterfly spawns",
+  audio: "Audio",
 };
 
 export const SECTION_DESCRIPTIONS: Record<SectionId, string> = {
@@ -864,4 +922,5 @@ export const SECTION_DESCRIPTIONS: Record<SectionId, string> = {
   "duckweed-patches": "Population, spread, and origin of each patch.",
   butterflies: "Flight, flower visits, proportions, and colors.",
   "butterfly-spawns": "Initial position, phase, and palette per butterfly.",
+  audio: "Background river recording and interactive water sound volumes.",
 };

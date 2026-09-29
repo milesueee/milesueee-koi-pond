@@ -23,6 +23,8 @@ interface QuickSettingsProps {
   onPreviewFamilyChange: (index: number | null) => void;
 }
 
+const formatPercent = (v: number): string => `${Math.round(v * 100)}%`;
+
 function SettingSlider({
   label,
   description,
@@ -30,6 +32,7 @@ function SettingSlider({
   min,
   max,
   step = 1,
+  formatValue,
   onChange,
 }: {
   label: string;
@@ -38,6 +41,7 @@ function SettingSlider({
   min: number;
   max: number;
   step?: number;
+  formatValue?: (value: number) => string;
   onChange: (value: number) => void;
 }) {
   return (
@@ -55,6 +59,7 @@ function SettingSlider({
         step={step}
         value={value}
         onValueChange={onChange}
+        formatValue={formatValue}
         className="drawer-elastic-slider"
       />
     </div>
@@ -120,6 +125,13 @@ export function QuickSettings({
   const [visibleFlowerCount, setVisibleFlowerCount] = useSetting<number>(["lotus", "visibleFlowerCount"]);
   const [visiblePatchCount, setVisiblePatchCount] = useSetting<number>(["duckweed", "visiblePatchCount"]);
   const [visibleButterflyCount, setVisibleButterflyCount] = useSetting<number>(["butterflies", "visibleCount"]);
+
+  const [ambientVolume, setAmbientVolume] = useSetting<number>(["audio", "ambientVolume"]);
+  const [effectsVolume, setEffectsVolume] = useSetting<number>(["audio", "effectsVolume"]);
+  const [dropVolume, setDropVolume] = useSetting<number>(["audio", "dropVolume"]);
+  const [rippleVolume, setRippleVolume] = useSetting<number>(["audio", "rippleVolume"]);
+  const [dipVolume, setDipVolume] = useSetting<number>(["audio", "dipVolume"]);
+  const [splashVolume, setSplashVolume] = useSetting<number>(["audio", "splashVolume"]);
 
   return (
     <div className="settings-quick">
@@ -274,6 +286,82 @@ export function QuickSettings({
           </div>
           <Switch id="quick-sound" checked={soundEnabled} onCheckedChange={onSoundChange} />
         </div>
+      </section>
+
+      <section className="settings-quick__section" aria-labelledby="quick-audio-heading">
+        <div className="settings-quick__heading">
+          <div className="settings-quick__heading-row">
+            <h3 id="quick-audio-heading">Audio &amp; volume</h3>
+            <button
+              type="button"
+              className="settings-section-reset"
+              onClick={() => onResetSection(["audio"])}
+            >
+              <RotateCcw aria-hidden="true" /> Reset
+            </button>
+          </div>
+          <p>Control the background river stream and interactive water sounds.</p>
+        </div>
+        <SettingSlider
+          label="River recording volume"
+          description="Loudness of the custom ambient river m4a audio stream."
+          value={ambientVolume}
+          min={0}
+          max={1}
+          step={0.01}
+          formatValue={formatPercent}
+          onChange={setAmbientVolume}
+        />
+        <SettingSlider
+          label="Sound effects master"
+          description="Master volume for all interactive pond water sounds."
+          value={effectsVolume}
+          min={0}
+          max={1}
+          step={0.01}
+          formatValue={formatPercent}
+          onChange={setEffectsVolume}
+        />
+        <SettingSlider
+          label="Water drops"
+          description="Volume of water drops on pond taps and clicks."
+          value={dropVolume}
+          min={0}
+          max={1}
+          step={0.01}
+          formatValue={formatPercent}
+          onChange={setDropVolume}
+        />
+        <SettingSlider
+          label="Water ripples"
+          description="Volume of water lapping and surface ripple movement."
+          value={rippleVolume}
+          min={0}
+          max={1}
+          step={0.01}
+          formatValue={formatPercent}
+          onChange={setRippleVolume}
+        />
+        <SettingSlider
+          label="Lotus pad dips"
+          description="Volume of submerged hollow gloops when pressing pads."
+          value={dipVolume}
+          min={0}
+          max={1}
+          step={0.01}
+          formatValue={formatPercent}
+          onChange={setDipVolume}
+        />
+        <SettingSlider
+          label="Water splashes"
+          description="Volume of fish scattering and pad release splashes."
+          value={splashVolume}
+          min={0}
+          max={1}
+          step={0.01}
+          formatValue={formatPercent}
+          onChange={setSplashVolume}
+        />
       </section>
     </div>
   );

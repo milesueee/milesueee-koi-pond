@@ -15,7 +15,12 @@ import {
   type FishAppearance,
 } from "./fish-appearance";
 import { Koi, SwimState } from "./koi";
-import { LotusLeavesPass } from "./lotus-leaves";
+import {
+  LotusLeavesPass,
+  type LotusGrabEndResult,
+  type LotusGrabUpdateResult,
+  type LotusInteractionResult,
+} from "./lotus-leaves";
 import {
   add,
   fromAngle,
@@ -435,6 +440,34 @@ export class FishRenderer {
 
   public setPreviewFamily(index: number | null): void {
     this.previewFamilyIndex = index;
+  }
+
+  public interactLotus(point: Vec2, impulse?: Vec2): LotusInteractionResult | null {
+    return this.lotusLeaves.interactAt(point, impulse);
+  }
+
+  public hitTestLotus(point: Vec2): boolean {
+    return this.lotusLeaves.hitTest(point) !== null;
+  }
+
+  public startGrabLotus(point: Vec2): LotusInteractionResult | null {
+    return this.lotusLeaves.startGrab(point);
+  }
+
+  public updateGrabLotus(point: Vec2): LotusGrabUpdateResult | null {
+    return this.lotusLeaves.updateGrab(point);
+  }
+
+  public endGrabLotus(point?: Vec2): LotusGrabEndResult | null {
+    return this.lotusLeaves.endGrab(point);
+  }
+
+  public cancelGrabLotus(): void {
+    this.lotusLeaves.cancelGrab();
+  }
+
+  public isLotusGrabbed(leafIndex?: number): boolean {
+    return this.lotusLeaves.isGrabbed(leafIndex);
   }
 
   public draw(school: School, time: number, showDebug: boolean): void {

@@ -56,6 +56,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AUDIO } from "./audio-config";
+import { SoundSynthesizer } from "./sound-synthesizer";
 import { ConfigEditor } from "./config-editor";
 import {
   CANVAS,
@@ -67,7 +68,7 @@ import {
 } from "./config";
 import { FishRenderer } from "./fish-renderer";
 import { useIsMobile } from "./hooks/use-mobile";
-import { clamp, vec } from "./math";
+import { clamp, vec, type Vec2 } from "./math";
 import { connectSettingsEffects } from "./settings/effects";
 import { connectPersistence, loadInto } from "./settings/persistence";
 import { useSettingsMeta } from "./settings/react";
@@ -224,10 +225,17 @@ export function App() {
   const displayRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dockRef = useRef<HTMLElement | null>(null);
+  const isPointerDownRef = useRef(false);
+  const lastPointerPosRef = useRef<Vec2 | null>(null);
+  const lastRipplePosRef = useRef<Vec2 | null>(null);
+  const lastLotusAudioPosRef = useRef<Vec2 | null>(null);
+  const activeLeafIndexRef = useRef<number | null>(null);
+  const isDraggingLotusRef = useRef(false);
   const ambientAudioContextRef = useRef<AudioContext | null>(null);
   const ambientAudioGainRef = useRef<GainNode | null>(null);
   const ambientAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const ambientAudioLoadingRef = useRef<Promise<void> | null>(null);
+  const soundSynthRef = useRef<SoundSynthesizer>(new SoundSynthesizer());
   const runtimeRef = useRef<PondRuntime | null>(null);
   const ambientModeRef = useRef(false);
   const soundEnabledRef = useRef<boolean>(AUDIO.defaultEnabled);
@@ -248,12 +256,82 @@ export function App() {
   const [confirmResetAll, setConfirmResetAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const startAmbientAudio = useCallback(async (): Promise<void> => {
+    if (ambientAudioSourceRef.current) {
+      await ambientAudioContextRef.current?.resume();
+      return;
+    }
+    if (ambientAudioLoadingRef.current) {
+      await ambientAudioLoadingRef.current;
+      return;
+    }
+
+    const context = new AudioContext();
+    const gain = context.createGain();
+    gain.gain.value = soundEnabledRef.current ? settings.live.audio.ambientVolume : 0;
+    gain.connect(context.destination);
+    ambientAudioContextRef.current = context;
+    ambientAudioGainRef.current = gain;
+    soundSynthRef.current.setContext(context);
+    soundSynthRef.current.setEnabled(soundEnabledRef.current);
+    soundSynthRef.current.setMasterVolume(settings.live.audio.effectsVolume);
+    soundSynthRef.current.setDropVolume(settings.live.audio.dropVolume);
+    soundSynthRef.current.setRippleVolume(settings.live.audio.rippleVolume);
+    soundSynthRef.current.setDipVolume(settings.live.audio.dipVolume);
+    soundSynthRef.current.setSplashVolume(settings.live.audio.splashVolume);
+
+    const loading = (async (): Promise<void> => {
+      await context.resume();
+      const loadBuffer = async (path: string): Promise<AudioBuffer> => {
+        const response = await fetch(`${import.meta.env.BASE_URL}${path}`);
+        if (!response.ok) throw new Error(`Unable to load ${path}`);
+        return context.decodeAudioData(await response.arrayBuffer());
+      };
+      const ambientBuffer = await loadBuffer(AUDIO.ambient.source);
+      if (context.state === "closed") return;
+
+      const ambientSource = context.createBufferSource();
+      ambientSource.buffer = ambientBuffer;
+      ambientSource.loop = true;
+      ambientSource.connect(gain);
+      ambientSource.start();
+      ambientAudioSourceRef.current = ambientSource;
+    })();
+    ambientAudioLoadingRef.current = loading;
+    try {
+      await loading;
+    } finally {
+      ambientAudioLoadingRef.current = null;
+    }
+  }, []);
+
+  const playSoundEffect = useCallback(
+    (action: (synth: SoundSynthesizer) => void) => {
+      if (!soundEnabledRef.current) return;
+      if (!ambientAudioContextRef.current) {
+        void startAmbientAudio().then(() => {
+          action(soundSynthRef.current);
+        });
+        return;
+      }
+      if (ambientAudioContextRef.current.state === "suspended") {
+        void ambientAudioContextRef.current.resume().then(() => {
+          action(soundSynthRef.current);
+        });
+        return;
+      }
+      action(soundSynthRef.current);
+    },
+    [startAmbientAudio],
+  );
+
   const scatter = useCallback(() => {
     const runtime = runtimeRef.current;
     if (!runtime) return;
     runtime.school.scatter();
+    playSoundEffect((synth) => synth.playWaterSplash());
     setStats(sceneStats(runtime));
-  }, []);
+  }, [playSoundEffect]);
 
   const setFamilyPreview = useCallback((index: number | null) => {
     previewFamilyRef.current = index;
@@ -326,51 +404,10 @@ export function App() {
     runtimeRef.current?.school.setRainIntensity(rainEnabled ? 1 : 0);
   }, [rainEnabled]);
 
-  const startAmbientAudio = useCallback(async (): Promise<void> => {
-    if (ambientAudioSourceRef.current) {
-      await ambientAudioContextRef.current?.resume();
-      return;
-    }
-    if (ambientAudioLoadingRef.current) {
-      await ambientAudioLoadingRef.current;
-      return;
-    }
-
-    const context = new AudioContext();
-    const gain = context.createGain();
-    gain.gain.value = soundEnabledRef.current ? AUDIO.ambient.volume : 0;
-    gain.connect(context.destination);
-    ambientAudioContextRef.current = context;
-    ambientAudioGainRef.current = gain;
-
-    const loading = (async (): Promise<void> => {
-      await context.resume();
-      const loadBuffer = async (path: string): Promise<AudioBuffer> => {
-        const response = await fetch(`${import.meta.env.BASE_URL}${path}`);
-        if (!response.ok) throw new Error(`Unable to load ${path}`);
-        return context.decodeAudioData(await response.arrayBuffer());
-      };
-      const ambientBuffer = await loadBuffer(AUDIO.ambient.source);
-      if (context.state === "closed") return;
-
-      const ambientSource = context.createBufferSource();
-      ambientSource.buffer = ambientBuffer;
-      ambientSource.loop = true;
-      ambientSource.connect(gain);
-      ambientSource.start();
-      ambientAudioSourceRef.current = ambientSource;
-    })();
-    ambientAudioLoadingRef.current = loading;
-    try {
-      await loading;
-    } finally {
-      ambientAudioLoadingRef.current = null;
-    }
-  }, []);
-
   const setAmbientSoundEnabled = useCallback((enabled: boolean) => {
     soundEnabledRef.current = enabled;
     setSoundEnabled(enabled);
+    soundSynthRef.current.setEnabled(enabled);
     if (enabled) void startAmbientAudio().catch(() => undefined);
 
     const context = ambientAudioContextRef.current;
@@ -379,11 +416,30 @@ export function App() {
       const now = context.currentTime;
       gain.gain.cancelAndHoldAtTime(now);
       gain.gain.linearRampToValueAtTime(
-        enabled ? AUDIO.ambient.volume : 0,
+        enabled ? settings.live.audio.ambientVolume : 0,
         now + AUDIO.toggleFadeSeconds,
       );
     }
   }, [startAmbientAudio]);
+
+  useEffect(() => {
+    return settings.subscribe((batch) => {
+      if (!batch.some((change) => change.path[0] === "audio")) return;
+      const audio = settings.live.audio;
+      const context = ambientAudioContextRef.current;
+      const gain = ambientAudioGainRef.current;
+      if (context && gain && soundEnabledRef.current) {
+        const now = context.currentTime;
+        gain.gain.cancelAndHoldAtTime(now);
+        gain.gain.linearRampToValueAtTime(audio.ambientVolume, now + 0.05);
+      }
+      soundSynthRef.current.setMasterVolume(audio.effectsVolume);
+      soundSynthRef.current.setDropVolume(audio.dropVolume);
+      soundSynthRef.current.setRippleVolume(audio.rippleVolume);
+      soundSynthRef.current.setDipVolume(audio.dipVolume);
+      soundSynthRef.current.setSplashVolume(audio.splashVolume);
+    });
+  }, []);
 
   const undoLastInteraction = useCallback(() => {
     settings.undo();
@@ -433,6 +489,7 @@ export function App() {
   }, [startAmbientAudio]);
 
   useEffect(() => () => {
+    soundSynthRef.current.dispose();
     ambientAudioSourceRef.current?.stop();
     ambientAudioSourceRef.current = null;
     ambientAudioGainRef.current = null;
@@ -458,7 +515,8 @@ export function App() {
   const resetAtmosphere = useCallback(() => {
     changeWeather(DEFAULT_WEATHER_PRESET_ID);
     setAmbientSoundEnabled(false);
-  }, [changeWeather, setAmbientSoundEnabled]);
+    resetSection(["audio"]);
+  }, [changeWeather, resetSection, setAmbientSoundEnabled]);
 
   useEffect(() => {
     const handleFullscreenChange = (): void => {
@@ -588,7 +646,7 @@ export function App() {
       switch (event.code) {
         case "Space":
           event.preventDefault();
-          school.scatter();
+          scatter();
           break;
         case "BracketLeft":
           changeKoiCount(-1);
@@ -629,25 +687,171 @@ export function App() {
     };
   }, [changeKoiCount, toggleAmbientMode]);
 
-  const callFish = (event: ReactPointerEvent<HTMLCanvasElement>): void => {
-    const runtime = runtimeRef.current;
-    if (!runtime) return;
+  const getPondCoords = (event: ReactPointerEvent<HTMLCanvasElement>): Vec2 => {
     const bounds = event.currentTarget.getBoundingClientRect();
-    runtime.school.callTo(
-      vec(
-        clamp(
-          ((event.clientX - bounds.left) / bounds.width) * CANVAS_WIDTH,
-          0,
-          CANVAS_WIDTH,
-        ),
-        clamp(
-          ((event.clientY - bounds.top) / bounds.height) * CANVAS_HEIGHT,
-          0,
-          CANVAS_HEIGHT,
-        ),
+    return vec(
+      clamp(
+        ((event.clientX - bounds.left) / bounds.width) * CANVAS_WIDTH,
+        0,
+        CANVAS_WIDTH,
+      ),
+      clamp(
+        ((event.clientY - bounds.top) / bounds.height) * CANVAS_HEIGHT,
+        0,
+        CANVAS_HEIGHT,
       ),
     );
-    setStats(sceneStats(runtime));
+  };
+
+  const handlePondPointerDown = (
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ): void => {
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+    const point = getPondCoords(event);
+    isPointerDownRef.current = true;
+    lastPointerPosRef.current = point;
+    lastRipplePosRef.current = point;
+
+    // Check if pointer hit an interactive lotus leaf to grab
+    const grabResult = runtime.renderer.startGrabLotus(point);
+    if (grabResult) {
+      isDraggingLotusRef.current = true;
+      activeLeafIndexRef.current = grabResult.leafIndex;
+      lastLotusAudioPosRef.current = point;
+      event.currentTarget.style.cursor = "grabbing";
+      runtime.school.ripples.trigger("touch", point);
+      playSoundEffect((synth) => synth.playWaterDip());
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture unsupported or failed
+      }
+    } else {
+      isDraggingLotusRef.current = false;
+      activeLeafIndexRef.current = null;
+      lastLotusAudioPosRef.current = null;
+      runtime.school.callTo(point);
+      playSoundEffect((synth) => synth.playWaterDrop());
+      setStats(sceneStats(runtime));
+    }
+  };
+
+  const handlePondPointerMove = (
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ): void => {
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+    const point = getPondCoords(event);
+
+    if (isPointerDownRef.current) {
+      if (isDraggingLotusRef.current) {
+        runtime.renderer.updateGrabLotus(point);
+        event.currentTarget.style.cursor = "grabbing";
+        const lastAudioPos = lastLotusAudioPosRef.current;
+        const distSinceAudio = lastAudioPos
+          ? Math.hypot(point.x - lastAudioPos.x, point.y - lastAudioPos.y)
+          : 999;
+        if (distSinceAudio > 50) {
+          playSoundEffect((synth) => synth.playWaterRipple({ volume: 0.12 }));
+          lastLotusAudioPosRef.current = point;
+        }
+      } else if (lastPointerPosRef.current) {
+        const dx = point.x - lastPointerPosRef.current.x;
+        const dy = point.y - lastPointerPosRef.current.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist >= 1.2) {
+          const lastRipple = lastRipplePosRef.current;
+          const distSinceRipple = lastRipple
+            ? Math.hypot(point.x - lastRipple.x, point.y - lastRipple.y)
+            : 999;
+          if (distSinceRipple > 34) {
+            runtime.school.callTo(point);
+            playSoundEffect((synth) =>
+              synth.playWaterRipple({ volume: 0.14, pitchMultiplier: 1.05 }),
+            );
+            lastRipplePosRef.current = point;
+          }
+          lastPointerPosRef.current = point;
+        }
+      }
+    } else if (event.pointerType === "mouse") {
+      const isOverLotus = runtime.renderer.hitTestLotus(point);
+      event.currentTarget.style.cursor = isOverLotus ? "grab" : "crosshair";
+    }
+  };
+
+  const handlePondPointerUp = (
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ): void => {
+    const runtime = runtimeRef.current;
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (isDraggingLotusRef.current && runtime) {
+      const point = getPondCoords(event);
+      const endResult = runtime.renderer.endGrabLotus(point);
+      if (endResult) {
+        if (endResult.wasDragged) {
+          runtime.school.ripples.trigger("touch", point);
+          playSoundEffect((synth) =>
+            synth.playWaterSplash({ intensity: "gentle", volume: 0.14 }),
+          );
+          settings.set(["lotus-leaves", endResult.leafIndex, "x"], endResult.x, {
+            interaction: `lotus-drag-${endResult.leafIndex}`,
+          });
+          settings.set(["lotus-leaves", endResult.leafIndex, "y"], endResult.y, {
+            interaction: `lotus-drag-${endResult.leafIndex}`,
+          });
+        } else {
+          playSoundEffect((synth) =>
+            synth.playWaterDrop({ pitchMultiplier: 0.88 }),
+          );
+        }
+      }
+      const isOverLotus = runtime.renderer.hitTestLotus(point);
+      event.currentTarget.style.cursor = isOverLotus ? "grab" : "crosshair";
+    }
+
+    isPointerDownRef.current = false;
+    isDraggingLotusRef.current = false;
+    lastPointerPosRef.current = null;
+    lastRipplePosRef.current = null;
+    lastLotusAudioPosRef.current = null;
+    activeLeafIndexRef.current = null;
+  };
+
+  const handlePondPointerCancel = (
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ): void => {
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        // Ignore
+      }
+    }
+    runtimeRef.current?.renderer.cancelGrabLotus();
+    isPointerDownRef.current = false;
+    isDraggingLotusRef.current = false;
+    lastPointerPosRef.current = null;
+    lastRipplePosRef.current = null;
+    lastLotusAudioPosRef.current = null;
+    activeLeafIndexRef.current = null;
+  };
+
+  const handlePondPointerLeave = (
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ): void => {
+    if (!isPointerDownRef.current && event.pointerType === "mouse") {
+      event.currentTarget.style.cursor = "crosshair";
+    }
   };
 
   const revealHiddenInterfaceOnMobile = (
@@ -682,7 +886,11 @@ export function App() {
             ref={canvasRef}
             id="pond"
             aria-label="Animated procedural koi"
-            onPointerDown={callFish}
+            onPointerDown={handlePondPointerDown}
+            onPointerMove={handlePondPointerMove}
+            onPointerUp={handlePondPointerUp}
+            onPointerLeave={handlePondPointerLeave}
+            onPointerCancel={handlePondPointerCancel}
           />
           {previewFamily !== null && settingsOpen && (
             <div className="pond-preview-label" aria-live="polite">
@@ -845,7 +1053,7 @@ export function App() {
                 <TooltipTrigger
                   render={
                     <Button
-                      variant="secondary"
+                      variant="ghost"
                       size="sm"
                       onClick={scatter}
                       aria-keyshortcuts="Space"

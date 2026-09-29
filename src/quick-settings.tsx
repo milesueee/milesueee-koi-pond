@@ -274,8 +274,8 @@ export function QuickSettings({
         </div>
         <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
           <div className="quick-setting__copy">
-            <Label htmlFor="quick-rain">Rain ripples</Label>
-            <small>Show raindrops spreading across the surface.</small>
+            <Label htmlFor="quick-rain">Rain</Label>
+            <small>Falling rain particles and surface ripples.</small>
           </div>
           <Switch id="quick-rain" checked={rainEnabled} onCheckedChange={onRainChange} />
         </div>

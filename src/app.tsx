@@ -2,7 +2,6 @@ import {
   Cloud,
   CloudFog,
   CloudRain,
-  Droplets,
   EyeOff,
   Fish,
   Maximize2,
@@ -401,7 +400,9 @@ export function App() {
     runtime.renderer.setWeatherPreset(weatherPreset);
   }, [weatherPreset]);
   useEffect(() => {
-    runtimeRef.current?.school.setRainIntensity(rainEnabled ? 1 : 0);
+    const intensity = rainEnabled ? 1 : 0;
+    runtimeRef.current?.school.setRainIntensity(intensity);
+    runtimeRef.current?.renderer.setRainIntensity(intensity);
   }, [rainEnabled]);
 
   const setAmbientSoundEnabled = useCallback((enabled: boolean) => {
@@ -609,7 +610,9 @@ export function App() {
     runtimeRef.current = runtime;
     const activeWeather = getWeatherPreset(settings.meta().weather);
     renderer.setWeatherPreset(activeWeather.id);
-    school.setRainIntensity(settings.meta().rain ? 1 : 0);
+    const initialRain = settings.meta().rain ? 1 : 0;
+    school.setRainIntensity(initialRain);
+    renderer.setRainIntensity(initialRain);
     const disconnectEffects = connectSettingsEffects(settings, { school, renderer });
 
     const resizeObserver = new ResizeObserver(() => {
@@ -1168,16 +1171,16 @@ export function App() {
               </DropdownMenu>
               <label className="toggle-control">
                 {rainEnabled ? (
-                  <Droplets aria-hidden="true" className="toggle-control__icon toggle-control__icon--active" />
+                  <CloudRain aria-hidden="true" className="toggle-control__icon toggle-control__icon--active" />
                 ) : (
-                  <Droplets aria-hidden="true" className="toggle-control__icon toggle-control__icon--muted" />
+                  <CloudRain aria-hidden="true" className="toggle-control__icon toggle-control__icon--muted" />
                 )}
-                <span className="control-label">Ripples</span>
+                <span className="control-label">Rain</span>
                 <Switch
                   size="sm"
                   checked={rainEnabled}
                   onCheckedChange={handleRainChange}
-                  aria-label="Toggle rain ripples"
+                  aria-label="Toggle rain"
                 />
               </label>
               <label className="toggle-control">

@@ -32,6 +32,7 @@ import {
   type Vec2,
 } from "./math";
 import { PondBedPass } from "./pond-bed";
+import { RainPass } from "./rain-pass";
 import { School } from "./school";
 import { SurfaceDisturbancePass } from "./surface-disturbance";
 import { TinyFishRenderer } from "./tiny-fish-renderer";
@@ -235,6 +236,7 @@ export class FishRenderer {
   private readonly duckweed = new DuckweedPass();
   private readonly lotusLeaves = new LotusLeavesPass();
   private readonly butterflies = new ButterflyPass();
+  private readonly rain = new RainPass();
   private readonly fishShadowMaterial = shadowMaterial(1);
   private readonly shadowTriangles: GeometryBatch;
   private readonly outerTriangles: GeometryBatch;
@@ -304,6 +306,7 @@ export class FishRenderer {
       this.duckweed.group,
       this.lotusLeaves.group,
       this.butterflies.group,
+      this.rain.group,
     );
     this.weatherScene.add(this.weather.mesh);
 
@@ -423,6 +426,7 @@ export class FishRenderer {
     this.surfaceDisturbance.resize(width, height);
     this.waterSurface.resize(width, height);
     this.butterflies.resize(width / oldWidth, height / oldHeight);
+    this.rain.resize(width, height);
   }
 
   public dispose(): void {
@@ -436,6 +440,10 @@ export class FishRenderer {
 
   public setWeatherPreset(id: WeatherPresetId): void {
     this.weather.setPreset(id);
+  }
+
+  public setRainIntensity(intensity: number): void {
+    this.rain.setIntensity(intensity);
   }
 
   public setPreviewFamily(index: number | null): void {
@@ -537,6 +545,7 @@ export class FishRenderer {
     this.duckweed.update(time);
     this.lotusLeaves.update(time);
     this.butterflies.update(time);
+    this.rain.update(time);
 
     this.renderer.setRenderTarget(this.underwaterTarget);
     this.renderer.clear();

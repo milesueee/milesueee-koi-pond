@@ -8,6 +8,8 @@ interface ScreensaverClockProps {
 export function ScreensaverClock({ active }: ScreensaverClockProps) {
   const [enabled] = useSetting<boolean>(["screensaver", "enabled"]);
   const [font] = useSetting<string>(["screensaver", "font"]);
+  const [position] = useSetting<string>(["screensaver", "position"]);
+  const [scale] = useSetting<number>(["screensaver", "scale"]);
   const [showSeconds] = useSetting<boolean>(["screensaver", "showSeconds"]);
   const [format24h] = useSetting<boolean>(["screensaver", "format24h"]);
 
@@ -49,11 +51,18 @@ export function ScreensaverClock({ active }: ScreensaverClockProps) {
       ? "screensaver-clock--mono"
       : "screensaver-clock--serif";
 
+  const positionClass = `screensaver-clock--pos-${position || "center"}`;
+
   return (
     <aside
-      className={`screensaver-clock ${fontClass} ${
+      className={`screensaver-clock ${fontClass} ${positionClass} ${
         active ? "screensaver-clock--visible" : ""
       }`}
+      style={
+        {
+          "--clock-scale": scale ?? 1,
+        } as React.CSSProperties
+      }
       role="timer"
       aria-label="Screensaver clock"
       aria-hidden={!active}

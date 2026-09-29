@@ -852,6 +852,28 @@ const screensaver = group({
     label: "Clock font",
     description: "Font style for the screensaver time and date display.",
   }),
+  position: choice({
+    default: "center",
+    options: [
+      { value: "center", label: "Center" },
+      { value: "top-center", label: "Top center" },
+      { value: "top-left", label: "Top left" },
+      { value: "top-right", label: "Top right" },
+      { value: "bottom-center", label: "Bottom center" },
+      { value: "bottom-left", label: "Bottom left" },
+      { value: "bottom-right", label: "Bottom right" },
+    ],
+    label: "Position",
+    description: "Screen placement for the clock overlay.",
+  }),
+  scale: num({
+    default: 1,
+    min: 0.5,
+    max: 2,
+    step: 0.05,
+    label: "Clock size",
+    description: "Scale multiplier for the screensaver time and date.",
+  }),
   showSeconds: bool({
     default: false,
     label: "Show seconds",

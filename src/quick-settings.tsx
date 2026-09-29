@@ -139,6 +139,8 @@ export function QuickSettings({
 
   const [screensaverEnabled, setScreensaverEnabled] = useSetting<boolean>(["screensaver", "enabled"]);
   const [clockFont, setClockFont] = useSetting<string>(["screensaver", "font"]);
+  const [clockPosition, setClockPosition] = useSetting<string>(["screensaver", "position"]);
+  const [clockScale, setClockScale] = useSetting<number>(["screensaver", "scale"]);
   const [clockSeconds, setClockSeconds] = useSetting<boolean>(["screensaver", "showSeconds"]);
   const [clock24h, setClock24h] = useSetting<boolean>(["screensaver", "format24h"]);
 
@@ -336,6 +338,36 @@ export function QuickSettings({
                 <option value="mono">Retro Monospace (Arcade)</option>
               </select>
             </div>
+            <div className="quick-setting" data-base-ui-swipe-ignore>
+              <div className="quick-setting__copy">
+                <Label htmlFor="quick-clock-position">Position</Label>
+                <small>Screen placement for the clock overlay.</small>
+              </div>
+              <select
+                id="quick-clock-position"
+                className="quick-setting__select"
+                value={clockPosition}
+                onChange={(event) => setClockPosition(event.target.value)}
+              >
+                <option value="center">Center</option>
+                <option value="top-center">Top center</option>
+                <option value="top-left">Top left</option>
+                <option value="top-right">Top right</option>
+                <option value="bottom-center">Bottom center</option>
+                <option value="bottom-left">Bottom left</option>
+                <option value="bottom-right">Bottom right</option>
+              </select>
+            </div>
+            <SettingSlider
+              label="Clock size"
+              description="Scale multiplier for the screensaver time and date."
+              value={clockScale}
+              min={0.5}
+              max={2}
+              step={0.05}
+              formatValue={(v) => `${Math.round(v * 100)}%`}
+              onChange={setClockScale}
+            />
             <div className="quick-setting quick-setting--switch" data-base-ui-swipe-ignore>
               <div className="quick-setting__copy">
                 <Label htmlFor="quick-clock-seconds">Show seconds</Label>

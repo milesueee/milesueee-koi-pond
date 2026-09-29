@@ -1390,10 +1390,14 @@ input[type="color"] {
 /* ---- screensaver clock -------------------------------------------------- */
 
 .screensaver-clock {
+  --clock-tx: -50%;
+  --clock-ty: -50%;
+  --clock-scale: 1;
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.97);
+  transform-origin: center center;
+  transform: translate(var(--clock-tx), var(--clock-ty)) scale(calc(var(--clock-scale) * 0.96));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1408,7 +1412,7 @@ input[type="color"] {
     opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
     transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
     visibility 1.4s cubic-bezier(0.16, 1, 0.3, 1);
-  padding: 2.5rem 3.5rem;
+  padding: 1.75rem 2.75rem;
   border-radius: 1.5rem;
   background: radial-gradient(
     circle at center,
@@ -1422,7 +1426,92 @@ input[type="color"] {
 .screensaver-clock--visible {
   opacity: 1;
   visibility: visible;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translate(var(--clock-tx), var(--clock-ty)) scale(var(--clock-scale));
+}
+
+/* Position modifiers */
+.screensaver-clock--pos-center {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  --clock-tx: -50%;
+  --clock-ty: -50%;
+  transform-origin: center center;
+  align-items: center;
+  text-align: center;
+}
+
+.screensaver-clock--pos-top-center {
+  top: 10%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  --clock-tx: -50%;
+  --clock-ty: 0;
+  transform-origin: top center;
+  align-items: center;
+  text-align: center;
+}
+
+.screensaver-clock--pos-top-left {
+  top: 8%;
+  left: 6%;
+  right: auto;
+  bottom: auto;
+  --clock-tx: 0;
+  --clock-ty: 0;
+  transform-origin: top left;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.screensaver-clock--pos-top-right {
+  top: 8%;
+  right: 6%;
+  left: auto;
+  bottom: auto;
+  --clock-tx: 0;
+  --clock-ty: 0;
+  transform-origin: top right;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.screensaver-clock--pos-bottom-center {
+  bottom: 12%;
+  top: auto;
+  left: 50%;
+  right: auto;
+  --clock-tx: -50%;
+  --clock-ty: 0;
+  transform-origin: bottom center;
+  align-items: center;
+  text-align: center;
+}
+
+.screensaver-clock--pos-bottom-left {
+  bottom: 10%;
+  top: auto;
+  left: 6%;
+  right: auto;
+  --clock-tx: 0;
+  --clock-ty: 0;
+  transform-origin: bottom left;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.screensaver-clock--pos-bottom-right {
+  bottom: 10%;
+  top: auto;
+  right: 6%;
+  left: auto;
+  --clock-tx: 0;
+  --clock-ty: 0;
+  transform-origin: bottom right;
+  align-items: flex-end;
+  text-align: right;
 }
 
 .screensaver-clock__time {

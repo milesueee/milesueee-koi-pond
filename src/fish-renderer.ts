@@ -478,7 +478,7 @@ export class FishRenderer {
     return this.lotusLeaves.isGrabbed(leafIndex);
   }
 
-  public draw(school: School, time: number, showDebug: boolean): void {
+  public draw(school: School, time: number, _showDebug: boolean): void {
     if (this.previousAppearanceTime >= 0) {
       const deltaTime = Math.min(
         0.1,
@@ -524,7 +524,6 @@ export class FishRenderer {
       const appearance = this.depthAppearances[appearanceIndex];
       this.updateDepthAppearance(fish, this.appearances[appearanceIndex], appearance);
       this.drawKoi(fish, appearance);
-      if (showDebug) this.drawDebug(fish, appearance);
     }
 
     this.shadowTriangles.commit();
@@ -907,15 +906,5 @@ export class FishRenderer {
       appearance.eye,
       6,
     );
-  }
-
-  private drawDebug(fish: Koi, appearance: FishAppearance): void {
-    for (let node = 0; node < SPINE_NODES - 1; node += 1) {
-      this.outlineLines.line(
-        fish.renderSpine[node],
-        fish.renderSpine[node + 1],
-        appearance.eye,
-      );
-    }
   }
 }

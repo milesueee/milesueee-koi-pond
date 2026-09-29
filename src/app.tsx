@@ -91,6 +91,14 @@ interface PondRuntime {
   showDebug: boolean;
 }
 
+interface PerformanceMetrics {
+  fps: number;
+  frameTimeMs: number;
+  resolution: string;
+  koiCount: number;
+  minnowCount: number;
+}
+
 const emptyStats: SceneStats = {
   koi: FISH.initialCount,
 };
@@ -239,6 +247,15 @@ export function App() {
   const ambientModeRef = useRef(false);
   const soundEnabledRef = useRef<boolean>(AUDIO.defaultEnabled);
   const [stats, setStats] = useState<SceneStats>(emptyStats);
+  const [debugHudOpen, setDebugHudOpen] = useState(false);
+  const debugHudOpenRef = useRef(false);
+  const [metrics, setMetrics] = useState<PerformanceMetrics>({
+    fps: 60,
+    frameTimeMs: 16.6,
+    resolution: "1920×1080 (@1.0x)",
+    koiCount: FISH.initialCount,
+    minnowCount: 48,
+  });
   const [showInterface, setShowInterface] = useState(true);
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientControlsVisible, setAmbientControlsVisible] = useState(true);
@@ -630,6 +647,8 @@ export function App() {
     let accumulator = 0;
     let simulationTime = 0;
     let previousTime = performance.now();
+    let frameCount = 0;
+    let lastMetricsUpdateTime = performance.now();
     const animate = (now: number): void => {
       accumulator += Math.min((now - previousTime) / 1000, 0.1);
       previousTime = now;
@@ -640,6 +659,26 @@ export function App() {
       }
 
       renderer.draw(school, simulationTime, runtime.showDebug);
+
+      frameCount += 1;
+      if (now - lastMetricsUpdateTime >= 350) {
+        const elapsed = now - lastMetricsUpdateTime;
+        const currentFps = Math.round((frameCount * 1000) / elapsed);
+        const currentFrameTime = +(elapsed / frameCount).toFixed(1);
+        frameCount = 0;
+        lastMetricsUpdateTime = now;
+        if (debugHudOpenRef.current) {
+          const dpr = window.devicePixelRatio || 1;
+          setMetrics({
+            fps: currentFps,
+            frameTimeMs: currentFrameTime,
+            resolution: `${Math.round(window.innerWidth * dpr)}×${Math.round(window.innerHeight * dpr)} (@${dpr.toFixed(1)}x)`,
+            koiCount: school.fish.length,
+            minnowCount: school.tinyFish.fish.length,
+          });
+        }
+      }
+
       animationFrame = requestAnimationFrame(animate);
     };
 
@@ -658,7 +697,12 @@ export function App() {
           changeKoiCount(1);
           break;
         case "KeyD":
-          runtime.showDebug = !runtime.showDebug;
+          setDebugHudOpen((current) => {
+            const next = !current;
+            debugHudOpenRef.current = next;
+            runtime.showDebug = next;
+            return next;
+          });
           break;
         case "KeyH":
           setShowInterface((current) => !current);
@@ -913,6 +957,31 @@ export function App() {
           <header className="brand-float">
             <h1 className="brand-wordmark">milesueee ∙ nagomi</h1>
           </header>
+
+          {debugHudOpen && (
+            <aside className="performance-hud" role="region" aria-label="Performance metrics">
+              <div className="performance-hud__row">
+                <span className="performance-hud__badge">
+                  <span
+                    className={`performance-hud__dot ${
+                      metrics.fps >= 58
+                        ? "performance-hud__dot--good"
+                        : metrics.fps >= 30
+                        ? "performance-hud__dot--ok"
+                        : "performance-hud__dot--bad"
+                    }`}
+                  />
+                  <span className="performance-hud__fps">{metrics.fps} FPS</span>
+                </span>
+                <span className="performance-hud__sub">{metrics.frameTimeMs} ms</span>
+              </div>
+              <div className="performance-hud__divider" />
+              <div className="performance-hud__meta">
+                <span>{metrics.resolution}</span>
+                <span>{metrics.koiCount} koi · {metrics.minnowCount} minnows</span>
+              </div>
+            </aside>
+          )}
 
             <div className="top-actions">
               <GitHubStars repo={GITHUB_REPOSITORY} />

@@ -67,8 +67,8 @@ export function ScreensaverClock({ active }: ScreensaverClockProps) {
       aria-label="Screensaver clock"
       aria-hidden={!active}
     >
-      <div className="screensaver-clock__time">{timeStr}</div>
       <div className="screensaver-clock__date">{dateStr}</div>
+      <div className="screensaver-clock__time">{timeStr}</div>
     </aside>
   );
 }

@@ -333,8 +333,8 @@ export function QuickSettings({
                 value={clockFont}
                 onChange={(event) => setClockFont(event.target.value)}
               >
+                <option value="sans">Mac Minimalist (SF Pro / Inter)</option>
                 <option value="serif">Editorial Serif (Cormorant Garamond)</option>
-                <option value="sans">Inter Ultrathin (Modern Zen)</option>
                 <option value="mono">Retro Monospace (Arcade)</option>
               </select>
             </div>

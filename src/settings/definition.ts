@@ -843,10 +843,10 @@ const screensaver = group({
     description: "Display time and date after 10s of inactivity in fullscreen.",
   }),
   font: choice({
-    default: "serif",
+    default: "sans",
     options: [
+      { value: "sans", label: "Mac Minimalist (SF Pro / Inter)" },
       { value: "serif", label: "Editorial Serif (Cormorant)" },
-      { value: "sans", label: "Inter Ultrathin" },
       { value: "mono", label: "Retro Monospace" },
     ],
     label: "Clock font",

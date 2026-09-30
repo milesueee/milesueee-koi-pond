@@ -13,6 +13,9 @@ import type {
   LotusFlowerSetting,
   LotusLeafSetting,
   Rgb,
+  RockDepth,
+  RockPaletteSetting,
+  RockSetting,
   TinyFishSchoolSetting,
 } from "./settings/definition";
 
@@ -25,6 +28,9 @@ export type {
   LotusFlowerSetting,
   LotusLeafSetting,
   Rgb,
+  RockDepth,
+  RockPaletteSetting,
+  RockSetting,
   TinyFishSchoolSetting,
 };
 
@@ -61,6 +67,8 @@ export const DUCKWEED = live.duckweed;
 export const DUCKWEED_PATCHES = live["duckweed-patches"];
 export const BUTTERFLIES = live.butterflies;
 export const BUTTERFLY_SPAWNS = live["butterfly-spawns"];
+export const ROCKS = live.rocks;
+export const POND_ROCKS = live["pond-rocks"];
 
 // The settings coordinates above remain in the original landscape layout.
 // The simulation and renderer use these live dimensions for the visible pond.

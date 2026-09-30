@@ -53,7 +53,7 @@ function migrateV1ToOverrides(draft: Record<string, unknown>): Record<string, un
   const overrides: Record<string, unknown> = {};
   const defaultsTree = buildDefaults(definition) as Record<string, unknown>;
   const growableSections = new Set<SectionId>([
-    "tiny-fish-schools", "lotus-leaves", "lotus-flowers", "duckweed-patches", "butterfly-spawns",
+    "tiny-fish-schools", "lotus-leaves", "lotus-flowers", "duckweed-patches", "butterfly-spawns", "pond-rocks",
   ]);
 
   for (const id of Object.keys(definition.children) as SectionId[]) {

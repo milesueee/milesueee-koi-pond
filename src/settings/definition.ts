@@ -842,6 +842,107 @@ const butterflySpawns = collection(butterflySpawnItem, [
   },
 });
 
+// ---- rocks ---------------------------------------------------------------
+
+const rockPalette = group({
+  base: color({ default: 0x4a5459 }),
+  highlight: color({ default: 0x768289 }),
+  shade: color({ default: 0x2c3338 }),
+  accent: color({ default: 0x5a7852 }),
+});
+
+export type RockDepth = "submerged" | "emergent";
+
+const rockItem = group({
+  x: num({ default: 0, min: -80, max: 560, step: 1 }),
+  y: num({ default: 0, min: -80, max: 350, step: 1 }),
+  radiusX: num({ default: 12, min: 2, max: 40, step: 0.5 }),
+  radiusY: num({ default: 9, min: 2, max: 40, step: 0.5 }),
+  angle: num({ default: 0, min: -TAU, max: TAU, step: 0.01 }),
+  depth: choice<RockDepth>({
+    default: "submerged",
+    options: [
+      { value: "submerged", label: "Submerged riverbed pebble" },
+      { value: "emergent", label: "Emergent surface boulder" },
+    ],
+  }),
+  palette: index({ default: 0, of: ["rocks", "palettes"] }),
+  moss: num({ default: 0.25, min: 0, max: 1, step: 0.05 }),
+});
+
+const rocks = group(
+  {
+    visibleRockCount: num({ default: 12, min: 0, max: 32, step: 1, int: true, label: "Pond rocks" }),
+    rockScale: num({ default: 1, min: 0.4, max: 2.5, step: 0.05, label: "Rock scale" }),
+    shadow: group({
+      color: color({ default: 0x09211c }),
+      opacity: num({ default: 0.35, min: 0, max: 1, step: 0.01 }),
+      offset: offsetGroup(3.0, 5.0),
+    }),
+    palettes: list(rockPalette, [
+      // 0: River Slate Gray (Cool river stone)
+      { base: 0x4a5559, highlight: 0x78868c, shade: 0x2b3338, accent: 0x587854 },
+      // 1: Mossy Jade Stone (Lichen & river moss)
+      { base: 0x3d5448, highlight: 0x62806f, shade: 0x203028, accent: 0x7da85b },
+      // 2: Warm River Granite (Sandstone pebble)
+      { base: 0x6e6357, highlight: 0x9c8f80, shade: 0x423a31, accent: 0xad9d65 },
+      // 3: Dark Volcanic Basalt (Obsidian river rock)
+      { base: 0x292d30, highlight: 0x4d5357, shade: 0x14181a, accent: 0x38575c },
+    ]),
+  },
+  { label: "Rocks", effect: "rocks:rebuild" },
+);
+
+const pondRocks = collection(rockItem, [
+  // Curated blend of submerged riverbed pebbles across the bed & emergent perimeter stones:
+  // Submerged pebbles on the pond bed:
+  { x: 195, y: 72, radiusX: 11, radiusY: 8, angle: 0.45, depth: "submerged", palette: 0, moss: 0.3 },
+  { x: 285, y: 115, radiusX: 14, radiusY: 10, angle: 2.15, depth: "submerged", palette: 2, moss: 0.15 },
+  { x: 160, y: 185, radiusX: 12, radiusY: 9, angle: 1.15, depth: "submerged", palette: 1, moss: 0.45 },
+  { x: 345, y: 195, radiusX: 9, radiusY: 7, angle: 3.4, depth: "submerged", palette: 3, moss: 0.2 },
+  { x: 235, y: 228, radiusX: 13, radiusY: 9, angle: 5.1, depth: "submerged", palette: 0, moss: 0.35 },
+  { x: 215, y: 142, radiusX: 8, radiusY: 6, angle: 0.85, depth: "submerged", palette: 2, moss: 0.1 },
+  // Emergent boulders around the perimeter:
+  { x: 42, y: 112, radiusX: 18, radiusY: 14, angle: 0.95, depth: "emergent", palette: 1, moss: 0.6 },
+  { x: 442, y: 120, radiusX: 19, radiusY: 15, angle: 4.8, depth: "emergent", palette: 0, moss: 0.4 },
+  { x: 370, y: 242, radiusX: 16, radiusY: 12, angle: 2.75, depth: "emergent", palette: 3, moss: 0.3 },
+  { x: 148, y: 248, radiusX: 17, radiusY: 13, angle: 1.65, depth: "emergent", palette: 2, moss: 0.5 },
+  { x: 265, y: 22, radiusX: 20, radiusY: 14, angle: 3.9, depth: "emergent", palette: 0, moss: 0.55 },
+  { x: 388, y: 55, radiusX: 15, radiusY: 11, angle: 5.6, depth: "emergent", palette: 1, moss: 0.4 },
+  // Reserve placements (up to 16 defaults, can grow up to 32):
+  { x: 88, y: 195, radiusX: 13, radiusY: 10, angle: 0.25, depth: "submerged", palette: 2, moss: 0.2 },
+  { x: 418, y: 165, radiusX: 14, radiusY: 11, angle: 1.85, depth: "emergent", palette: 3, moss: 0.35 },
+  { x: 115, y: 48, radiusX: 12, radiusY: 8, angle: 4.15, depth: "submerged", palette: 0, moss: 0.25 },
+  { x: 310, y: 245, radiusX: 15, radiusY: 10, angle: 2.95, depth: "submerged", palette: 1, moss: 0.4 },
+], {
+  label: "Pond rocks",
+  countFrom: ["rocks", "visibleRockCount"],
+  max: 32,
+  effect: "rocks:rebuild",
+  create: (live) => {
+    const l = live as { rocks: ValueOf<typeof rocks> };
+    const randomInt = (min: number, maxExclusive: number): number =>
+      Math.floor(min + Math.random() * (maxExclusive - min));
+    const rounded = (min: number, max: number): number => Number((min + Math.random() * (max - min)).toFixed(2));
+    const depth: RockDepth = Math.random() < 0.45 ? "emergent" : "submerged";
+    const pos = depth === "emergent"
+      ? randomEdgePosition()
+      : { x: randomInt(40, LAYOUT.width - 40), y: randomInt(35, LAYOUT.height - 35) };
+    const radius = depth === "emergent" ? rounded(14, 22) : rounded(7, 15);
+    const aspect = rounded(0.7, 1.3);
+    return {
+      x: pos.x,
+      y: pos.y,
+      radiusX: radius,
+      radiusY: Number((radius * aspect).toFixed(2)),
+      angle: rounded(0, Math.PI * 2),
+      depth,
+      palette: randomInt(0, l.rocks.palettes.length),
+      moss: rounded(0.1, 0.6),
+    };
+  },
+});
+
 // ---- audio --------------------------------------------------------------
 
 const audio = group({
@@ -994,6 +1095,8 @@ export const definition = group({
   "duckweed-patches": duckweedPatches,
   butterflies,
   "butterfly-spawns": butterflySpawns,
+  rocks,
+  "pond-rocks": pondRocks,
   audio,
   screensaver,
 });
@@ -1009,6 +1112,8 @@ export type LotusLeafSetting = ValueOf<typeof lotusLeafItem>;
 export type LotusFlowerSetting = ValueOf<typeof lotusFlowerItem>;
 export type DuckweedPatchSetting = ValueOf<typeof duckweedPatchItem>;
 export type ButterflySpawnSetting = ValueOf<typeof butterflySpawnItem>;
+export type RockPaletteSetting = ValueOf<typeof rockPalette>;
+export type RockSetting = ValueOf<typeof rockItem>;
 export type AudioSetting = ValueOf<typeof audio>;
 export type Rgb = readonly [number, number, number];
 
@@ -1027,6 +1132,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
   { id: "lotus", title: "Lotus", description: "Leaves, flowers, palettes, and placement.", sectionIds: ["lotus", "lotus-leaves", "lotus-flowers"] },
   { id: "duckweed", title: "Duckweed", description: "Leaf appearance and floating patches.", sectionIds: ["duckweed", "duckweed-patches"] },
   { id: "butterflies", title: "Butterflies", description: "Flight behavior, colors, and spawn points.", sectionIds: ["butterflies", "butterfly-spawns"] },
+  { id: "rocks", title: "Rocks", description: "River stones, zen boulders, and submerged pebbles.", sectionIds: ["rocks", "pond-rocks"] },
   { id: "audio", title: "Audio", description: "Background river sound and interactive sound effect volumes.", sectionIds: ["audio"] },
   { id: "screensaver", title: "Screensaver", description: "Fullscreen idle clock and typography.", sectionIds: ["screensaver"] },
 ];
@@ -1047,6 +1153,8 @@ export const SECTION_TITLES: Record<SectionId, string> = {
   "duckweed-patches": "Duckweed patches",
   butterflies: "Butterflies",
   "butterfly-spawns": "Butterfly spawns",
+  rocks: "Rocks",
+  "pond-rocks": "Pond rocks",
   audio: "Audio",
   screensaver: "Screensaver",
 };
@@ -1067,6 +1175,8 @@ export const SECTION_DESCRIPTIONS: Record<SectionId, string> = {
   "duckweed-patches": "Population, spread, and origin of each patch.",
   butterflies: "Flight, flower visits, proportions, and colors.",
   "butterfly-spawns": "Initial position, phase, and palette per butterfly.",
+  rocks: "Rock geometry, shadow, scale, and stone palettes.",
+  "pond-rocks": "Stone positions, dimensions, depth, and moss.",
   audio: "Background river recording and interactive water sound volumes.",
   screensaver: "Fullscreen idle screensaver clock, font, and time formatting.",
 };

@@ -77,6 +77,7 @@ const HANDLERS: Record<string, EffectHandler> = {
   "duckweed:rebuild": { heavy: true, run: (runtime) => runtime.renderer.refreshSection("duckweed") },
   "butterflies:keep": { run: (runtime) => runtime.renderer.refreshSection("butterflies") },
   "butterflies:respawn": { run: (runtime) => runtime.renderer.refreshSection("butterfly-spawns") },
+  "rocks:rebuild": { run: (runtime) => runtime.renderer.refreshSection("rocks") },
 };
 
 export function connectSettingsEffects(store: SettingsStore, runtime: SettingsRuntime): () => void {

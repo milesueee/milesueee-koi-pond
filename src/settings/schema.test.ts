@@ -43,7 +43,8 @@ describe("schema defaults", () => {
       [
         "koi", "koi-palettes", "koi-patterns", "tiny-fish", "tiny-fish-schools",
         "pond-bed", "water", "ripples", "lotus", "lotus-leaves", "lotus-flowers",
-        "duckweed", "duckweed-patches", "butterflies", "butterfly-spawns", "audio", "screensaver",
+        "duckweed", "duckweed-patches", "butterflies", "butterfly-spawns",
+        "rocks", "pond-rocks", "audio", "screensaver",
       ].sort(),
     );
   });

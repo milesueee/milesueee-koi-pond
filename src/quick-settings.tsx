@@ -132,6 +132,7 @@ export function QuickSettings({
   const [lotusRotation, setLotusRotation] = useSetting<number>(["lotus", "rotationAmount"]);
   const [visiblePatchCount, setVisiblePatchCount] = useSetting<number>(["duckweed", "visiblePatchCount"]);
   const [visibleButterflyCount, setVisibleButterflyCount] = useSetting<number>(["butterflies", "visibleCount"]);
+  const [visibleRockCount, setVisibleRockCount] = useSetting<number>(["rocks", "visibleRockCount"]);
 
   const [ambientVolume, setAmbientVolume] = useSetting<number>(["audio", "ambientVolume"]);
   const [effectsVolume, setEffectsVolume] = useSetting<number>(["audio", "effectsVolume"]);
@@ -231,7 +232,7 @@ export function QuickSettings({
 
       <section className="settings-quick__section" aria-labelledby="quick-plants-heading">
         <div className="settings-quick__heading">
-          <div className="settings-quick__heading-row"><h3 id="quick-plants-heading">Plants &amp; life</h3><button type="button" className="settings-section-reset" onClick={() => onResetSection(["lotus", "lotus-leaves", "lotus-flowers", "duckweed", "duckweed-patches", "butterflies", "butterfly-spawns"])}><RotateCcw aria-hidden="true" /> Reset</button></div>
+          <div className="settings-quick__heading-row"><h3 id="quick-plants-heading">Plants &amp; life</h3><button type="button" className="settings-section-reset" onClick={() => onResetSection(["lotus", "lotus-leaves", "lotus-flowers", "duckweed", "duckweed-patches", "butterflies", "butterfly-spawns", "rocks", "pond-rocks"])}><RotateCcw aria-hidden="true" /> Reset</button></div>
           <p>Fill the edges without changing the koi already swimming.</p>
         </div>
         <SettingSlider
@@ -298,6 +299,14 @@ export function QuickSettings({
           min={0}
           max={12}
           onChange={setVisibleButterflyCount}
+        />
+        <SettingSlider
+          label="Pond rocks"
+          description="Add riverbed stones and perimeter zen boulders."
+          value={visibleRockCount}
+          min={0}
+          max={32}
+          onChange={setVisibleRockCount}
         />
       </section>
 

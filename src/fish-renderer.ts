@@ -33,6 +33,7 @@ import {
 } from "./math";
 import { PondBedPass } from "./pond-bed";
 import { RainPass } from "./rain-pass";
+import { RocksPass } from "./rocks";
 import { School } from "./school";
 import { SurfaceDisturbancePass } from "./surface-disturbance";
 import { TinyFishRenderer } from "./tiny-fish-renderer";
@@ -234,6 +235,7 @@ export class FishRenderer {
   private readonly weather: WeatherPass;
   private readonly tinyFishRenderer = new TinyFishRenderer();
   private readonly duckweed = new DuckweedPass();
+  private readonly rocks = new RocksPass();
   private readonly lotusLeaves = new LotusLeavesPass();
   private readonly butterflies = new ButterflyPass();
   private readonly rain = new RainPass();
@@ -291,7 +293,7 @@ export class FishRenderer {
       this.surfaceDisturbance.texture,
     );
     this.weather = new WeatherPass(this.compositeTarget.texture);
-    this.bedScene.add(this.pondBed.mesh);
+    this.bedScene.add(this.pondBed.mesh, this.rocks.bedGroup);
     this.shadowScene.add(
       this.lotusLeaves.shadowGroup,
       this.tinyFishRenderer.shadowGroup,
@@ -300,10 +302,12 @@ export class FishRenderer {
     this.surfaceScene.add(this.waterSurface.mesh);
     this.surfaceShadowScene.add(
       this.duckweed.shadowGroup,
+      this.rocks.surfaceShadowGroup,
       this.butterflies.shadowGroup,
     );
     this.surfaceObjectScene.add(
       this.duckweed.group,
+      this.rocks.surfaceGroup,
       this.lotusLeaves.group,
       this.butterflies.group,
       this.rain.group,
@@ -366,7 +370,7 @@ export class FishRenderer {
   public refreshConfig(): void {
     for (const section of [
       "koi", "koi-palettes", "tiny-fish", "pond-bed", "water",
-      "lotus", "duckweed", "butterflies",
+      "lotus", "duckweed", "butterflies", "rocks", "pond-rocks",
     ]) this.refreshSection(section);
   }
 
@@ -403,6 +407,10 @@ export class FishRenderer {
       case "butterfly-spawns":
         this.butterflies.refreshConfig();
         break;
+      case "rocks":
+      case "pond-rocks":
+        this.rocks.refreshConfig();
+        break;
       default:
         break;
     }
@@ -434,6 +442,7 @@ export class FishRenderer {
     this.compositeTarget.dispose();
     this.surfaceDisturbance.dispose();
     this.fishShadowMaterial.dispose();
+    this.rocks.dispose();
     this.weather.dispose();
     this.renderer.dispose();
   }
@@ -456,6 +465,10 @@ export class FishRenderer {
 
   public hitTestLotus(point: Vec2): boolean {
     return this.lotusLeaves.hitTest(point) !== null;
+  }
+
+  public hitTestRock(point: Vec2): boolean {
+    return this.rocks.hitTest(point) !== null;
   }
 
   public startGrabLotus(point: Vec2): LotusInteractionResult | null {
@@ -542,6 +555,7 @@ export class FishRenderer {
     );
     this.waterSurface.update(school, time);
     this.duckweed.update(time);
+    this.rocks.update(time);
     this.lotusLeaves.update(time);
     this.butterflies.update(time);
     this.rain.update(time);
@@ -910,6 +924,10 @@ export class FishRenderer {
 
   public getLotusLeaves(): LotusLeavesPass {
     return this.lotusLeaves;
+  }
+
+  public getRocks(): RocksPass {
+    return this.rocks;
   }
 }
 

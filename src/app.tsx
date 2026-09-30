@@ -830,8 +830,16 @@ export function App() {
       isDraggingLotusRef.current = false;
       activeLeafIndexRef.current = null;
       lastLotusAudioPosRef.current = null;
+      const hitRock = runtime.renderer.hitTestRock(point);
+      if (hitRock) {
+        runtime.school.ripples.trigger("touch", point);
+        playSoundEffect((synth) =>
+          synth.playWaterSplash({ intensity: "gentle", volume: 0.16 }),
+        );
+      } else {
+        playSoundEffect((synth) => synth.playWaterDrop());
+      }
       runtime.school.callTo(point);
-      playSoundEffect((synth) => synth.playWaterDrop());
       setStats(sceneStats(runtime));
     }
   };
@@ -877,7 +885,8 @@ export function App() {
       }
     } else if (event.pointerType === "mouse") {
       const isOverLotus = runtime.renderer.hitTestLotus(point);
-      event.currentTarget.style.cursor = isOverLotus ? "grab" : "crosshair";
+      const isOverRock = runtime.renderer.hitTestRock(point);
+      event.currentTarget.style.cursor = isOverLotus ? "grab" : isOverRock ? "pointer" : "crosshair";
     }
   };
 
@@ -915,7 +924,8 @@ export function App() {
         }
       }
       const isOverLotus = runtime.renderer.hitTestLotus(point);
-      event.currentTarget.style.cursor = isOverLotus ? "grab" : "crosshair";
+      const isOverRock = runtime.renderer.hitTestRock(point);
+      event.currentTarget.style.cursor = isOverLotus ? "grab" : isOverRock ? "pointer" : "crosshair";
     }
 
     isPointerDownRef.current = false;

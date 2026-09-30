@@ -60,4 +60,9 @@ describe("RocksPass", () => {
       pass.update(0);
     }).not.toThrow();
   });
+
+  it("disposes resources cleanly", () => {
+    const pass = new RocksPass();
+    expect(() => pass.dispose()).not.toThrow();
+  });
 });

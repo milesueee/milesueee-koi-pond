@@ -344,4 +344,15 @@ export class RocksPass {
       }
     }
   }
+
+  public dispose(): void {
+    this.bedShadowGeometry.dispose();
+    this.bedRockGeometry.dispose();
+    this.bedAccentGeometry.dispose();
+    this.surfaceShadowGeometry.dispose();
+    this.surfaceRockGeometry.dispose();
+    this.surfaceAccentGeometry.dispose();
+    this.bedShadowMaterial.dispose();
+    this.shadowMaterial.dispose();
+  }
 }

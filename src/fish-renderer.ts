@@ -907,4 +907,9 @@ export class FishRenderer {
       6,
     );
   }
+
+  public getLotusLeaves(): LotusLeavesPass {
+    return this.lotusLeaves;
+  }
 }
+

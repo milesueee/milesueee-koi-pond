@@ -519,8 +519,16 @@ const lotus = group(
     flowerPalettes: list(
       lotusFlowerPalette,
       [
+        // 0: Classic Rose Pink (Nelumbo nucifera)
         { outerPetal: 0xf29aaa, innerPetal: 0xffc4cc, petalLight: 0xffe1e2, center: 0xf2bd45, centerDark: 0xb96d31 },
-        { outerPetal: 0xe985ac, innerPetal: 0xfab7ce, petalLight: 0xffdce6, center: 0xf5c64b, centerDark: 0xbd7330 },
+        // 1: Sacred White (Ivory Lily)
+        { outerPetal: 0xf0f4f4, innerPetal: 0xffffff, petalLight: 0xffffff, center: 0xf5c242, centerDark: 0xb37628 },
+        // 2: Golden Lotus (Yellow Water Lily)
+        { outerPetal: 0xfbe273, innerPetal: 0xfff0a4, petalLight: 0xfffae0, center: 0xee9b00, centerDark: 0xae5700 },
+        // 3: Blue Lotus (Nymphaea caerulea / Celestial Lily)
+        { outerPetal: 0x8ea8e8, innerPetal: 0xb5c9fa, petalLight: 0xdde7ff, center: 0xf5c442, centerDark: 0xba762b },
+        // 4: Deep Crimson / Ruby Lotus
+        { outerPetal: 0xc93b62, innerPetal: 0xe86488, petalLight: 0xfca5ba, center: 0xf5bf42, centerDark: 0xa84e1b },
       ],
       { effect: "lotus:palette" },
     ),
@@ -577,6 +585,8 @@ const lotusLeaves = collection(lotusLeafItem, [
   },
 });
 
+export type LotusBloomType = "full" | "dense" | "opening" | "bud";
+
 const lotusFlowerItem = group({
   // A visible leaf by default (leafIndex 15 used to point at a hidden reserve leaf).
   leafIndex: index({ default: 0, of: ["lotus-leaves"] }),
@@ -585,34 +595,84 @@ const lotusFlowerItem = group({
   offsetY: num({ default: 0, min: -5, max: 5, step: 0.05 }),
   rotation: num({ default: 0, min: -TAU, max: TAU, step: 0.01 }),
   palette: index({ default: 0, of: ["lotus", "flowerPalettes"] }),
+  bloomType: choice<LotusBloomType>({
+    default: "full",
+    options: [
+      { value: "full", label: "Full bloom" },
+      { value: "dense", label: "Dense / Double flower" },
+      { value: "opening", label: "Opening blossom" },
+      { value: "bud", label: "Young bud" },
+    ],
+  }),
 });
 
 // Raise lotus.visibleFlowerCount up to this list's length to reveal reserve flowers.
+// Each of the 16 flower slots is authored on a unique, well-spaced leaf with no collisions.
 const lotusFlowers = collection(lotusFlowerItem, [
-  { leafIndex: 12, radius: 5.4, offsetX: 0.5, offsetY: -0.5, rotation: 0.25, palette: 0 },
-  { leafIndex: 13, radius: 5.0, offsetX: -0.8, offsetY: 0.3, rotation: 0.75, palette: 1 },
-  { leafIndex: 7, radius: 4.8, offsetX: 2.0, offsetY: -1.0, rotation: 0.45, palette: 0 },
-  // Data fix: was leafIndex 15, a hidden reserve leaf, so flower #4 was invisible by default.
-  { leafIndex: 9, radius: 4.5, offsetX: -1.0, offsetY: 0.5, rotation: 0.15, palette: 1 },
+  { leafIndex: 12, radius: 5.4, offsetX: 0.5, offsetY: -0.5, rotation: 0.25, palette: 0, bloomType: "full" },
+  { leafIndex: 13, radius: 5.6, offsetX: -0.8, offsetY: 0.3, rotation: 0.75, palette: 1, bloomType: "dense" },
+  { leafIndex: 7, radius: 4.8, offsetX: 2.0, offsetY: -1.0, rotation: 0.45, palette: 2, bloomType: "opening" },
+  { leafIndex: 9, radius: 4.5, offsetX: -1.0, offsetY: 0.5, rotation: 0.15, palette: 3, bloomType: "full" },
+  { leafIndex: 2, radius: 4.2, offsetX: 1.2, offsetY: -0.8, rotation: 1.15, palette: 4, bloomType: "bud" },
+  { leafIndex: 6, radius: 5.2, offsetX: -1.5, offsetY: 1.0, rotation: 2.45, palette: 0, bloomType: "dense" },
+  { leafIndex: 4, radius: 4.6, offsetX: -1.0, offsetY: -0.8, rotation: 4.75, palette: 1, bloomType: "opening" },
+  { leafIndex: 10, radius: 4.4, offsetX: 0.6, offsetY: 0.8, rotation: 2.15, palette: 2, bloomType: "full" },
+  { leafIndex: 0, radius: 4.8, offsetX: 0.9, offsetY: -0.7, rotation: 0.95, palette: 3, bloomType: "opening" },
+  { leafIndex: 1, radius: 5.0, offsetX: -0.6, offsetY: 0.5, rotation: 3.15, palette: 4, bloomType: "dense" },
+  { leafIndex: 3, radius: 4.3, offsetX: 0.8, offsetY: 0.6, rotation: 1.65, palette: 0, bloomType: "bud" },
+  { leafIndex: 5, radius: 5.3, offsetX: -1.1, offsetY: -0.4, rotation: 5.05, palette: 1, bloomType: "full" },
+  { leafIndex: 15, radius: 4.6, offsetX: 0.5, offsetY: -0.5, rotation: 2.85, palette: 2, bloomType: "dense" },
+  { leafIndex: 17, radius: 4.7, offsetX: -0.7, offsetY: 0.7, rotation: 4.15, palette: 3, bloomType: "opening" },
+  { leafIndex: 18, radius: 5.1, offsetX: 0.8, offsetY: -0.6, rotation: 1.45, palette: 4, bloomType: "full" },
+  { leafIndex: 16, radius: 4.2, offsetX: -0.5, offsetY: 0.5, rotation: 3.65, palette: 0, bloomType: "bud" },
 ], {
   label: "Lotus flowers",
   countFrom: ["lotus", "visibleFlowerCount"],
   max: 16,
   effect: "lotus:palette",
   create: (live) => {
-    const l = live as { lotus: ValueOf<typeof lotus>; ["lotus-leaves"]: ValueOf<typeof lotusLeaves> };
+    const l = live as {
+      lotus: ValueOf<typeof lotus>;
+      ["lotus-leaves"]: ValueOf<typeof lotusLeaves>;
+      ["lotus-flowers"]?: Array<ValueOf<typeof lotusFlowerItem>>;
+    };
     const randomInt = (min: number, maxExclusive: number): number =>
       Math.floor(min + Math.random() * (maxExclusive - min));
     const rounded = (min: number, max: number): number => Number((min + Math.random() * (max - min)).toFixed(2));
     const availableLeaves = l["lotus-leaves"].length;
     const visibleLeaves = Math.max(1, Math.min(availableLeaves, Math.round(l.lotus.visibleLeafCount)));
+    const bloomTypes: LotusBloomType[] = ["full", "dense", "opening", "bud"];
+
+    // Find unoccupied visible leaves to avoid duplicate flowers on the same pad
+    const existingFlowers = l["lotus-flowers"] ?? [];
+    const occupiedLeaves = new Set(existingFlowers.map((f) => f.leafIndex));
+
+    const freeVisibleLeaves: number[] = [];
+    for (let i = 0; i < visibleLeaves; i += 1) {
+      if (!occupiedLeaves.has(i)) freeVisibleLeaves.push(i);
+    }
+
+    let targetLeaf: number;
+    if (freeVisibleLeaves.length > 0) {
+      targetLeaf = freeVisibleLeaves[randomInt(0, freeVisibleLeaves.length)];
+    } else {
+      const freeAllLeaves: number[] = [];
+      for (let i = 0; i < availableLeaves; i += 1) {
+        if (!occupiedLeaves.has(i)) freeAllLeaves.push(i);
+      }
+      targetLeaf = freeAllLeaves.length > 0
+        ? freeAllLeaves[randomInt(0, freeAllLeaves.length)]
+        : randomInt(0, visibleLeaves);
+    }
+
     return {
-      leafIndex: randomInt(0, visibleLeaves),
-      radius: rounded(4.2, 6.2),
-      offsetX: rounded(-2.2, 2.2),
-      offsetY: rounded(-2.2, 2.2),
+      leafIndex: targetLeaf,
+      radius: rounded(4.2, 5.6),
+      offsetX: rounded(-1.5, 1.5),
+      offsetY: rounded(-1.5, 1.5),
       rotation: rounded(0, Math.PI * 2),
       palette: randomInt(0, l.lotus.flowerPalettes.length),
+      bloomType: bloomTypes[randomInt(0, bloomTypes.length)],
     };
   },
 });

@@ -673,6 +673,7 @@ export function App() {
     const renderer = new FishRenderer(canvas);
     const runtime: PondRuntime = { school, renderer, showDebug: false };
     runtimeRef.current = runtime;
+    (window as unknown as { nagomiRuntime?: PondRuntime }).nagomiRuntime = runtime;
     const activeWeather = getWeatherPreset(settings.meta().weather);
     renderer.setWeatherPreset(activeWeather.id);
     const initialRain = settings.meta().rain ? 1 : 0;

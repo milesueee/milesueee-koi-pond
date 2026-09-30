@@ -4,10 +4,14 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   LOTUS,
+  LotusBloomType,
+  LotusFlowerSetting,
+  LotusLeafSetting,
   LOTUS_FLOWERS,
   LOTUS_LEAVES,
   viewportPoint,
 } from "./config";
+import type { SurfacePoint } from "./surface-geometry";
 
 interface Point {
   x: number;
@@ -41,7 +45,7 @@ const PALETTES: readonly LeafPalette[] = LOTUS.leafPalettes.map((palette) => ({
   center: new THREE.Color(palette.center),
 }));
 
-const FLOWER_PALETTES: readonly FlowerPalette[] = LOTUS.flowerPalettes.map(
+const FLOWER_PALETTES: FlowerPalette[] = LOTUS.flowerPalettes.map(
   (palette) => ({
     outerPetal: new THREE.Color(palette.outerPetal),
     innerPetal: new THREE.Color(palette.innerPetal),
@@ -256,6 +260,187 @@ interface LeafPhysicsState {
   visualRadius: number;
 }
 
+export interface ActiveFlowerPlacement {
+  flower: LotusFlowerSetting;
+  flowerIndex: number;
+  leafIndex: number;
+  center: Point;
+  radius: number;
+  rotation: number;
+  palette: FlowerPalette;
+  bloomType: LotusBloomType;
+}
+
+/**
+ * Resolves active flower placements across visible leaves ensuring:
+ * 1. At most one flower per leaf (deduplication).
+ * 2. Unassigned or out-of-range flowers dynamically claim free visible leaves.
+ * 3. Spatial clearance check guarantees no two flowers ever overlap visually.
+ */
+export function resolveActiveFlowerPlacements(
+  visibleLeaves: readonly LotusLeafSetting[],
+  visibleFlowers: readonly LotusFlowerSetting[],
+  leafCenters: readonly Point[],
+  _leafAngles: readonly number[],
+  leafRotDeltas: readonly number[],
+  leafDips: readonly number[],
+): ActiveFlowerPlacement[] {
+  if (visibleLeaves.length === 0 || visibleFlowers.length === 0) {
+    return [];
+  }
+
+  const occupiedLeaves = new Set<number>();
+  const candidates: ActiveFlowerPlacement[] = [];
+  const unassigned: Array<{ flower: LotusFlowerSetting; fIdx: number }> = [];
+
+  const createPlacement = (
+    flower: LotusFlowerSetting,
+    fIdx: number,
+    leafIdx: number,
+  ): ActiveFlowerPlacement => {
+    const center = leafCenters[leafIdx];
+    const rotDelta = leafRotDeltas[leafIdx] ?? 0;
+    const cosR = Math.cos(rotDelta);
+    const sinR = Math.sin(rotDelta);
+    const rotOffsetX = flower.offsetX * cosR - flower.offsetY * sinR;
+    const rotOffsetY = flower.offsetX * sinR + flower.offsetY * cosR;
+    const dip = leafDips[leafIdx] ?? 0;
+    const palette = FLOWER_PALETTES[
+      ((flower.palette % FLOWER_PALETTES.length) + FLOWER_PALETTES.length) %
+        FLOWER_PALETTES.length
+    ];
+    return {
+      flower,
+      flowerIndex: fIdx,
+      leafIndex: leafIdx,
+      center: {
+        x: center.x + rotOffsetX,
+        y: center.y + rotOffsetY,
+      },
+      radius:
+        flower.radius *
+        LOTUS.flowerRadiusScale *
+        Math.max(0.7, 1 - dip * 0.05),
+      rotation: flower.rotation + rotDelta,
+      palette,
+      bloomType: (flower.bloomType as LotusBloomType) ?? "full",
+    };
+  };
+
+  // Pass 1: Flowers that already target a unique, valid visible leaf
+  for (let fIdx = 0; fIdx < visibleFlowers.length; fIdx += 1) {
+    const flower = visibleFlowers[fIdx];
+    if (
+      flower.leafIndex >= 0 &&
+      flower.leafIndex < visibleLeaves.length &&
+      !occupiedLeaves.has(flower.leafIndex)
+    ) {
+      occupiedLeaves.add(flower.leafIndex);
+      candidates.push(createPlacement(flower, fIdx, flower.leafIndex));
+    } else {
+      unassigned.push({ flower, fIdx });
+    }
+  }
+
+  // Pass 2: Reassign unassigned flowers to free visible leaves
+  if (unassigned.length > 0 && occupiedLeaves.size < visibleLeaves.length) {
+    for (let lIdx = 0; lIdx < visibleLeaves.length; lIdx += 1) {
+      if (occupiedLeaves.has(lIdx)) continue;
+      if (unassigned.length === 0) break;
+      const { flower, fIdx } = unassigned.shift()!;
+      occupiedLeaves.add(lIdx);
+      candidates.push(createPlacement(flower, fIdx, lIdx));
+    }
+  }
+
+  // Pass 3: Spatial clearance verification.
+  // Ensure no two placed flowers overlap. If leaves are overlapping or close,
+  // ensure a minimum distance of (rA + rB) * 1.25.
+  const verified: ActiveFlowerPlacement[] = [];
+  for (const cand of candidates) {
+    let collides = false;
+    for (const prev of verified) {
+      const dist = Math.hypot(
+        cand.center.x - prev.center.x,
+        cand.center.y - prev.center.y,
+      );
+      const minRequired = (cand.radius + prev.radius) * 1.25;
+      if (dist < minRequired) {
+        collides = true;
+        // Try to nudge cand away from prev within leaf bounds
+        const dx = cand.center.x - prev.center.x;
+        const dy = cand.center.y - prev.center.y;
+        const len = Math.hypot(dx, dy);
+        if (len > 0.001) {
+          const shift = minRequired - len + 1.5;
+          const nudgedX = cand.center.x + (dx / len) * shift;
+          const nudgedY = cand.center.y + (dy / len) * shift;
+          const leafCenter = leafCenters[cand.leafIndex];
+          const distToLeaf = Math.hypot(
+            nudgedX - leafCenter.x,
+            nudgedY - leafCenter.y,
+          );
+          const leafMaxRadius = visibleLeaves[cand.leafIndex].radius * 0.65;
+          if (distToLeaf <= leafMaxRadius) {
+            const stillCollides = verified.some(
+              (p) =>
+                Math.hypot(nudgedX - p.center.x, nudgedY - p.center.y) <
+                (cand.radius + p.radius) * 1.25,
+            );
+            if (!stillCollides) {
+              cand.center = { x: nudgedX, y: nudgedY };
+              collides = false;
+            }
+          }
+        }
+        if (collides) break;
+      }
+    }
+    if (!collides) {
+      verified.push(cand);
+    }
+  }
+
+  return verified;
+}
+
+/**
+ * Returns world surface positions of all active, non-colliding lotus flowers at time `time`.
+ */
+export function getRenderedFlowerPositions(time: number): SurfacePoint[] {
+  const visibleLeaves = LOTUS_LEAVES.slice(0, LOTUS.visibleLeafCount);
+  const visibleFlowers = LOTUS_FLOWERS.slice(0, LOTUS.visibleFlowerCount);
+  if (visibleLeaves.length === 0 || visibleFlowers.length === 0) return [];
+
+  const leafCenters: Point[] = [];
+  const leafAngles: number[] = [];
+  const leafRotDeltas: number[] = [];
+  const leafDips: number[] = [];
+
+  for (const [leafIndex, leaf] of visibleLeaves.entries()) {
+    const placement = viewportPoint(leaf.x, leaf.y);
+    const drift = computeLeafDrift(time, leaf.phase, leafIndex);
+    leafCenters.push({
+      x: placement.x + drift.driftX,
+      y: placement.y + drift.driftY,
+    });
+    leafAngles.push(leaf.angle + drift.rotationDelta);
+    leafRotDeltas.push(drift.rotationDelta);
+    leafDips.push(0);
+  }
+
+  const placements = resolveActiveFlowerPlacements(
+    visibleLeaves,
+    visibleFlowers,
+    leafCenters,
+    leafAngles,
+    leafRotDeltas,
+    leafDips,
+  );
+
+  return placements.map((p) => ({ x: p.center.x, y: p.center.y }));
+}
+
 export class LotusLeavesPass {
   public readonly shadowGroup = new THREE.Group();
   public readonly group = new THREE.Group();
@@ -297,6 +482,7 @@ export class LotusLeavesPass {
     true,
   );
   private readonly physicsStates: LeafPhysicsState[] = [];
+  private activeFlowers: ActiveFlowerPlacement[] = [];
   private grabbedLeaf: GrabbedLeafState | null = null;
   private grabTargetX = 0;
   private grabTargetY = 0;
@@ -358,8 +544,17 @@ export class LotusLeavesPass {
       target.center.setHex(palette.center);
     }
     for (const [index, palette] of LOTUS.flowerPalettes.entries()) {
-      const target = FLOWER_PALETTES[index];
-      if (!target) continue;
+      let target = FLOWER_PALETTES[index];
+      if (!target) {
+        target = {
+          outerPetal: new THREE.Color(),
+          innerPetal: new THREE.Color(),
+          petalLight: new THREE.Color(),
+          center: new THREE.Color(),
+          centerDark: new THREE.Color(),
+        };
+        FLOWER_PALETTES.push(target);
+      }
       target.outerPetal.setHex(palette.outerPetal);
       target.innerPetal.setHex(palette.innerPetal);
       target.petalLight.setHex(palette.petalLight);
@@ -699,6 +894,10 @@ export class LotusLeavesPass {
     return this.physicsStates[leafIndex] ?? null;
   }
 
+  public getActiveFlowers(): readonly ActiveFlowerPlacement[] {
+    return this.activeFlowers;
+  }
+
   public update(time: number): void {
     const dt =
       this.lastTime < 0
@@ -714,6 +913,11 @@ export class LotusLeavesPass {
     const visibleLeaves = LOTUS_LEAVES.slice(0, LOTUS.visibleLeafCount);
     const visibleFlowers = LOTUS_FLOWERS.slice(0, LOTUS.visibleFlowerCount);
     this.stepPhysics(dt, visibleLeaves.length);
+
+    const leafCenters: Point[] = [];
+    const leafAngles: number[] = [];
+    const leafRotDeltas: number[] = [];
+    const leafDips: number[] = [];
 
     for (const [leafIndex, leaf] of visibleLeaves.entries()) {
       const physics = this.physicsStates[leafIndex];
@@ -746,6 +950,11 @@ export class LotusLeavesPass {
       physics.visualCenterY = center.y;
       physics.visualRadius = radius;
 
+      leafCenters.push(center);
+      leafAngles.push(angle);
+      leafRotDeltas.push(drift.rotationDelta);
+      leafDips.push(physics.dip);
+
       const palette = PALETTES[
         ((leaf.palette % PALETTES.length) + PALETTES.length) % PALETTES.length
       ];
@@ -763,31 +972,25 @@ export class LotusLeavesPass {
       );
       this.drawLeaf(this.leafBatch, center, radius, angle, leaf.phase, palette);
       this.drawVeins(center, radius, angle, leaf.phase, palette);
+    }
 
-      for (const flower of visibleFlowers) {
-        if (flower.leafIndex !== leafIndex) continue;
-        // Anchor flower relative to the rotated leaf surface
-        const cosR = Math.cos(drift.rotationDelta);
-        const sinR = Math.sin(drift.rotationDelta);
-        const rotOffsetX = flower.offsetX * cosR - flower.offsetY * sinR;
-        const rotOffsetY = flower.offsetX * sinR + flower.offsetY * cosR;
+    this.activeFlowers = resolveActiveFlowerPlacements(
+      visibleLeaves,
+      visibleFlowers,
+      leafCenters,
+      leafAngles,
+      leafRotDeltas,
+      leafDips,
+    );
 
-        this.drawFlower(
-          {
-            x: center.x + rotOffsetX,
-            y: center.y + rotOffsetY,
-          },
-          flower.radius *
-            LOTUS.flowerRadiusScale *
-            Math.max(0.7, 1 - physics.dip * 0.05),
-          flower.rotation + drift.rotationDelta,
-          FLOWER_PALETTES[
-            ((flower.palette % FLOWER_PALETTES.length) +
-              FLOWER_PALETTES.length) %
-              FLOWER_PALETTES.length
-          ],
-        );
-      }
+    for (const placement of this.activeFlowers) {
+      this.drawFlower(
+        placement.center,
+        placement.radius,
+        placement.rotation,
+        placement.palette,
+        placement.bloomType,
+      );
     }
 
     this.shadowBatch.commit(this.shadowGeometry);
@@ -889,6 +1092,7 @@ export class LotusLeavesPass {
     radius: number,
     rotation: number,
     palette: FlowerPalette,
+    bloomType: LotusBloomType = "full",
   ): void {
     const drawPetalRing = (
       count: number,
@@ -927,16 +1131,75 @@ export class LotusLeavesPass {
       }
     };
 
-    drawPetalRing(8, 1, 0.22, 0, palette.outerPetal, palette.petalLight);
-    drawPetalRing(
-      6,
-      0.66,
-      0.19,
-      Math.PI / 6,
-      palette.innerPetal,
-      palette.petalLight,
-    );
-    this.flowerBatch.circle(center, radius * 0.28, palette.centerDark);
-    this.flowerBatch.circle(center, radius * 0.18, palette.center);
+    switch (bloomType) {
+      case "dense":
+        // Double-flowered / Royal Water Lily (3 overlapping petal tiers)
+        drawPetalRing(10, 1.08, 0.2, 0, palette.outerPetal, palette.innerPetal);
+        drawPetalRing(
+          8,
+          0.8,
+          0.18,
+          Math.PI / 10,
+          palette.innerPetal,
+          palette.petalLight,
+        );
+        drawPetalRing(
+          6,
+          0.52,
+          0.16,
+          Math.PI / 5,
+          palette.petalLight,
+          palette.innerPetal,
+        );
+        this.flowerBatch.circle(center, radius * 0.26, palette.centerDark);
+        this.flowerBatch.circle(center, radius * 0.16, palette.center);
+        break;
+
+      case "opening":
+        // Opening blossom (cupped petals rising upwards)
+        drawPetalRing(6, 0.92, 0.25, 0, palette.outerPetal, palette.innerPetal);
+        drawPetalRing(
+          5,
+          0.6,
+          0.22,
+          Math.PI / 5,
+          palette.innerPetal,
+          palette.petalLight,
+        );
+        this.flowerBatch.circle(center, radius * 0.22, palette.centerDark);
+        this.flowerBatch.circle(center, radius * 0.14, palette.center);
+        break;
+
+      case "bud":
+        // Young compact bud (tightly folded petals, small central stamen)
+        drawPetalRing(4, 0.76, 0.28, 0, palette.outerPetal, palette.innerPetal);
+        drawPetalRing(
+          3,
+          0.52,
+          0.24,
+          Math.PI / 4,
+          palette.innerPetal,
+          palette.petalLight,
+        );
+        this.flowerBatch.circle(center, radius * 0.14, palette.centerDark);
+        this.flowerBatch.circle(center, radius * 0.08, palette.center);
+        break;
+
+      case "full":
+      default:
+        // Classic open bloom (2 balanced petal tiers)
+        drawPetalRing(8, 1, 0.22, 0, palette.outerPetal, palette.petalLight);
+        drawPetalRing(
+          6,
+          0.66,
+          0.19,
+          Math.PI / 6,
+          palette.innerPetal,
+          palette.petalLight,
+        );
+        this.flowerBatch.circle(center, radius * 0.28, palette.centerDark);
+        this.flowerBatch.circle(center, radius * 0.18, palette.center);
+        break;
+    }
   }
 }

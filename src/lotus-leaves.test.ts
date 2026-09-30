@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LOTUS, LOTUS_LEAVES, viewportPoint } from "./config";
+import { LOTUS, LOTUS_FLOWERS, LOTUS_LEAVES, viewportPoint } from "./config";
 import { computeLeafDrift, LotusLeavesPass } from "./lotus-leaves";
 
 describe("LotusLeavesPass interactivity", () => {
@@ -177,4 +177,75 @@ describe("LotusLeavesPass interactivity", () => {
     const dNormal = computeLeafDrift(2, 0, 0, 12, 10, 0.15, 1.0);
     expect(dFast.driftX).not.toBeCloseTo(dNormal.driftX, 3);
   });
+
+  it("supports diverse flower palettes and bloom morphologies without rendering errors", () => {
+    // 1. Verify 5 distinct palettes exist in settings
+    expect(LOTUS.flowerPalettes.length).toBeGreaterThanOrEqual(5);
+
+    // Verify palettes have varied petal colors
+    const colors = LOTUS.flowerPalettes.map((p) => p.outerPetal);
+    const uniqueColors = new Set(colors);
+    expect(uniqueColors.size).toBe(LOTUS.flowerPalettes.length);
+
+    // 2. Verify all 4 bloom types are present across default/reserve flowers
+    const bloomTypes = new Set(LOTUS_FLOWERS.map((f) => f.bloomType));
+    expect(bloomTypes.has("full")).toBe(true);
+    expect(bloomTypes.has("dense")).toBe(true);
+    expect(bloomTypes.has("opening")).toBe(true);
+    expect(bloomTypes.has("bud")).toBe(true);
+
+    // 3. Render pass with all flowers visible
+    const pass = new LotusLeavesPass();
+    const prevCount = LOTUS.visibleFlowerCount;
+    LOTUS.visibleFlowerCount = LOTUS_FLOWERS.length;
+
+    expect(() => {
+      pass.update(0);
+      pass.update(1.5);
+    }).not.toThrow();
+
+    LOTUS.visibleFlowerCount = prevCount;
+  });
+
+  it("prevents duplicate flowers on the same leaf and overlapping flowers across leaf count adjustments", () => {
+    const pass = new LotusLeavesPass();
+    const origLeafCount = LOTUS.visibleLeafCount;
+    const origFlowerCount = LOTUS.visibleFlowerCount;
+
+    // Test across various visibleLeafCount values
+    for (const leafCount of [3, 5, 8, 12, 15, 20, 25]) {
+      LOTUS.visibleLeafCount = leafCount;
+      LOTUS.visibleFlowerCount = Math.min(16, LOTUS_FLOWERS.length);
+
+      pass.update(1.0);
+      const active = (pass as unknown as { getActiveFlowers?: () => Array<{ leafIndex: number; center: { x: number; y: number }; radius: number }> }).getActiveFlowers?.();
+      expect(active).toBeDefined();
+      if (!active) continue;
+
+      // 1. No leaf may have more than one flower
+      const leavesWithFlower = active.map((f) => f.leafIndex);
+      const uniqueLeaves = new Set(leavesWithFlower);
+      expect(uniqueLeaves.size).toBe(active.length);
+
+      // 2. All active flowers must only be placed on visible leaves (< leafCount)
+      for (const leafIdx of leavesWithFlower) {
+        expect(leafIdx).toBeLessThan(leafCount);
+        expect(leafIdx).toBeGreaterThanOrEqual(0);
+      }
+
+      // 3. No two active flowers may overlap
+      for (let i = 0; i < active.length; i += 1) {
+        for (let j = i + 1; j < active.length; j += 1) {
+          const f1 = active[i];
+          const f2 = active[j];
+          const dist = Math.hypot(f1.center.x - f2.center.x, f1.center.y - f2.center.y);
+          expect(dist).toBeGreaterThanOrEqual((f1.radius + f2.radius) * 1.15);
+        }
+      }
+    }
+
+    LOTUS.visibleLeafCount = origLeafCount;
+    LOTUS.visibleFlowerCount = origFlowerCount;
+  });
 });
+

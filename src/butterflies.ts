@@ -4,16 +4,13 @@ import {
   BUTTERFLY_SPAWNS,
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
-  LOTUS,
-  LOTUS_FLOWERS,
-  LOTUS_LEAVES,
   viewportPoint,
 } from "./config";
 import {
   SurfaceGeometryBatch,
   type SurfacePoint,
 } from "./surface-geometry";
-import { computeLeafDrift } from "./lotus-leaves";
+import { getRenderedFlowerPositions } from "./lotus-leaves";
 
 type ButterflyState = "wander" | "approach" | "orbit" | "rest";
 
@@ -469,29 +466,15 @@ export class ButterflyPass {
     butterfly.turnTarget = (this.random(butterfly) * 2 - 1) * maximumAngle;
   }
 
-  private visibleFlowerCount(): number {
-    return LOTUS_FLOWERS.slice(0, LOTUS.visibleFlowerCount).filter(
-      (flower) => flower.leafIndex < LOTUS.visibleLeafCount,
-    ).length;
+  private visibleFlowerCount(time = 0): number {
+    return getRenderedFlowerPositions(time).length;
   }
 
   private flowerPosition(flowerIndex: number, time: number): SurfacePoint {
-    const flowers = LOTUS_FLOWERS.slice(0, LOTUS.visibleFlowerCount).filter(
-      (flower) => flower.leafIndex < LOTUS.visibleLeafCount,
-    );
+    const flowers = getRenderedFlowerPositions(time);
     const flower = flowers[Math.min(flowerIndex, flowers.length - 1)];
     if (!flower) return { x: CANVAS_WIDTH * 0.5, y: CANVAS_HEIGHT * 0.5 };
-    const leaf = LOTUS_LEAVES[flower.leafIndex];
-    const placement = viewportPoint(leaf.x, leaf.y);
-    const drift = computeLeafDrift(time, leaf.phase, flower.leafIndex);
-    const cosR = Math.cos(drift.rotationDelta);
-    const sinR = Math.sin(drift.rotationDelta);
-    const rotOffsetX = flower.offsetX * cosR - flower.offsetY * sinR;
-    const rotOffsetY = flower.offsetX * sinR + flower.offsetY * cosR;
-    return {
-      x: placement.x + drift.driftX + rotOffsetX,
-      y: placement.y + drift.driftY + rotOffsetY,
-    };
+    return flower;
   }
 
   private drawButterfly(butterfly: Butterfly, time: number): void {

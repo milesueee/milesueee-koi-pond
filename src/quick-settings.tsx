@@ -127,6 +127,9 @@ export function QuickSettings({
 
   const [visibleLeafCount, setVisibleLeafCount] = useSetting<number>(["lotus", "visibleLeafCount"]);
   const [visibleFlowerCount, setVisibleFlowerCount] = useSetting<number>(["lotus", "visibleFlowerCount"]);
+  const [lotusDriftSpeed, setLotusDriftSpeed] = useSetting<number>(["lotus", "driftSpeed"]);
+  const [lotusDriftAmount, setLotusDriftAmount] = useSetting<number>(["lotus", "driftX"]);
+  const [lotusRotation, setLotusRotation] = useSetting<number>(["lotus", "rotationAmount"]);
   const [visiblePatchCount, setVisiblePatchCount] = useSetting<number>(["duckweed", "visiblePatchCount"]);
   const [visibleButterflyCount, setVisibleButterflyCount] = useSetting<number>(["butterflies", "visibleCount"]);
 
@@ -246,6 +249,39 @@ export function QuickSettings({
           min={0}
           max={16}
           onChange={setVisibleFlowerCount}
+        />
+        <SettingSlider
+          label="Lotus drift speed"
+          description="Control how fast leaves drift and sway with the currents (0x is static)."
+          value={lotusDriftSpeed}
+          min={0}
+          max={3}
+          step={0.1}
+          formatValue={(v) => `${v.toFixed(1)}x`}
+          onChange={setLotusDriftSpeed}
+        />
+        <SettingSlider
+          label="Lotus drift distance"
+          description="Maximum distance leaves travel across the water."
+          value={lotusDriftAmount}
+          min={0}
+          max={28}
+          step={0.5}
+          formatValue={(v) => `${Math.round(v)}px`}
+          onChange={(next) => {
+            setLotusDriftAmount(next);
+            settings.set(["lotus", "driftY"], Number((next * 0.784).toFixed(2)));
+          }}
+        />
+        <SettingSlider
+          label="Lotus sway rotation"
+          description="Rocking angle and rotational sway of floating leaves."
+          value={lotusRotation}
+          min={0}
+          max={0.35}
+          step={0.01}
+          formatValue={(v) => `${Math.round((v * 180) / Math.PI)}°`}
+          onChange={setLotusRotation}
         />
         <SettingSlider
           label="Duckweed patches"

@@ -1,0 +1,9 @@
+services:
+  nagomi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nagomi-pond
+    ports:
+      - "8080:80"
+    restart: unless-stopped

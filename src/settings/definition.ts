@@ -496,6 +496,7 @@ const lotus = group(
     veinCount: num({ default: 5, min: 0, max: 20, step: 1, int: true }),
     notchHalfAngle: num({ default: 0.3, min: 0, max: Math.PI, step: 0.01 }),
     verticalScale: num({ default: 0.92, min: 0, max: 2, step: 0.01 }),
+    driftSpeed: num({ default: 1, min: 0, max: 4, step: 0.05 }),
     driftX: num({ default: 12.5, min: 0, max: 30, step: 0.01 }),
     driftY: num({ default: 9.8, min: 0, max: 30, step: 0.01 }),
     rotationAmount: num({ default: 0.14, min: 0, max: 0.5, step: 0.001 }),

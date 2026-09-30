@@ -201,11 +201,12 @@ export function computeLeafDrift(
   driftXScale = LOTUS.driftX,
   driftYScale = LOTUS.driftY,
   rotationAmount = LOTUS.rotationAmount,
+  driftSpeed = LOTUS.driftSpeed,
 ): LeafDriftResult {
-  // Deterministic individual personality per leaf
-  const speedMult = 0.75 + leafNoise(leafIndex, 1.1) * 0.7; // 0.75x to 1.45x individual speed
+  // Deterministic individual personality per leaf scaled by user driftSpeed setting
+  const speedMult = (0.75 + leafNoise(leafIndex, 1.1) * 0.7) * driftSpeed;
   const rotDir = leafNoise(leafIndex, 2.3) > 0.5 ? 1 : -1;
-  const rotSpeedMult = 0.7 + leafNoise(leafIndex, 3.7) * 0.8;
+  const rotSpeedMult = (0.7 + leafNoise(leafIndex, 3.7) * 0.8) * driftSpeed;
   const ampXMult = 0.8 + leafNoise(leafIndex, 4.2) * 0.4;
   const ampYMult = 0.8 + leafNoise(leafIndex, 5.5) * 0.4;
 

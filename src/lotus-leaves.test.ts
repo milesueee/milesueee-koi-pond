@@ -157,4 +157,24 @@ describe("LotusLeavesPass interactivity", () => {
     expect(leaf0.rotationDelta).not.toBeCloseTo(leaf1.rotationDelta, 3);
     expect(leaf1.driftY).not.toBeCloseTo(leaf2.driftY, 3);
   });
+
+  it("allows tuning lotus movement: stops movement when driftSpeed is 0 and scales with settings", () => {
+    // When driftSpeed is 0, drift at t=0 and t=10 is identical (stationary)
+    const d0 = computeLeafDrift(0, 0, 0, 12, 10, 0.15, 0);
+    const d1 = computeLeafDrift(10, 0, 0, 12, 10, 0.15, 0);
+    expect(d0.driftX).toBeCloseTo(d1.driftX, 5);
+    expect(d0.driftY).toBeCloseTo(d1.driftY, 5);
+    expect(d0.rotationDelta).toBeCloseTo(d1.rotationDelta, 5);
+
+    // When driftXScale, driftYScale, and rotationAmount are 0, displacement and rotation are 0
+    const dZero = computeLeafDrift(5, 0, 0, 0, 0, 0, 1.0);
+    expect(dZero.driftX).toBeCloseTo(0);
+    expect(dZero.driftY).toBeCloseTo(0);
+    expect(dZero.rotationDelta).toBeCloseTo(0);
+
+    // Higher speed scales movement frequency
+    const dFast = computeLeafDrift(2, 0, 0, 12, 10, 0.15, 2.5);
+    const dNormal = computeLeafDrift(2, 0, 0, 12, 10, 0.15, 1.0);
+    expect(dFast.driftX).not.toBeCloseTo(dNormal.driftX, 3);
+  });
 });

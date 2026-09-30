@@ -1303,6 +1303,7 @@ export function App() {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <Separator className="control-divider" orientation="vertical" />
               <label className="toggle-control" title="Toggle clock (C)">
                 <Clock
                   aria-hidden="true"
@@ -1320,7 +1321,7 @@ export function App() {
                   aria-label="Toggle clock (C)"
                 />
               </label>
-              <label className="toggle-control">
+              <label className="toggle-control" title="Toggle rain">
                 {rainEnabled ? (
                   <CloudRain aria-hidden="true" className="toggle-control__icon toggle-control__icon--active" />
                 ) : (
@@ -1334,7 +1335,7 @@ export function App() {
                   aria-label="Toggle rain"
                 />
               </label>
-              <label className="toggle-control">
+              <label className="toggle-control" title="Toggle sound (M)">
                 {soundEnabled ? (
                   <Volume2 aria-hidden="true" className="toggle-control__icon toggle-control__icon--active" />
                 ) : (
@@ -1345,7 +1346,7 @@ export function App() {
                   size="sm"
                   checked={soundEnabled}
                   onCheckedChange={handleSoundChange}
-                  aria-label="Toggle pond ambience"
+                  aria-label="Toggle pond ambience (M)"
                 />
               </label>
             </div>

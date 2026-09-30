@@ -6,7 +6,7 @@
 @import "@fontsource/jetbrains-mono";
 @import "@fontsource/silkscreen";
 @import "@fontsource/silkscreen/700.css";
-@import "@fontsource/dotgothic16";
+@import "@fontsource/dotgothic16/latin.css";
 @import "@fontsource/vt323";
 
 @custom-variant dark (&:is(.dark *));
@@ -519,9 +519,11 @@ input[type="color"] {
 
 .weather-trigger {
   height: var(--dock-control-height);
-  min-width: 6rem;
+  min-width: unset;
   border-radius: var(--dock-control-radius);
-  justify-content: flex-start;
+  justify-content: center;
+  padding: 0 0.55rem;
+  gap: 0.35rem;
 }
 
 .toggle-control {
@@ -537,6 +539,11 @@ input[type="color"] {
   cursor: pointer;
   user-select: none;
   transition: background-color 150ms ease;
+}
+
+.toggle-control .control-label {
+  min-width: 2.2rem;
+  text-align: left;
 }
 
 .toggle-control:hover {
@@ -1317,12 +1324,14 @@ input[type="color"] {
 
   .control-dock .weather-trigger {
     width: auto;
-    min-width: 5.5rem;
+    min-width: unset;
     padding-inline: 0.55rem;
   }
 
-  .control-group--environment .control-label {
-    display: inline;
+  @media (min-width: 440px) {
+    .control-group--environment .control-label {
+      display: inline;
+    }
   }
 
   .top-actions .github-stars {

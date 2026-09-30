@@ -236,10 +236,10 @@ export class RocksPass {
   }
 
   private drawRock(rock: ActiveRock): void {
-    const isEmergent = rock.depth === "emergent";
-    const shadowBatch = isEmergent ? this.surfaceShadowBatch : this.bedShadowBatch;
-    const rockBatch = isEmergent ? this.surfaceRockBatch : this.bedRockBatch;
-    const accentBatch = isEmergent ? this.surfaceAccentBatch : this.bedAccentBatch;
+    // All rocks sit on the underwater pond bed — there are no floating rocks
+    const shadowBatch = this.bedShadowBatch;
+    const rockBatch = this.bedRockBatch;
+    const accentBatch = this.bedAccentBatch;
 
     const center = viewportPoint(rock.x, rock.y);
     const numVerts = 10;
@@ -250,9 +250,7 @@ export class RocksPass {
     const vertices: SurfacePoint[] = [];
     const shadowVertices: SurfacePoint[] = [];
 
-    const shadowOffset = isEmergent
-      ? { x: ROCKS.shadow.offset.x, y: ROCKS.shadow.offset.y }
-      : { x: 2.0, y: 3.5 };
+    const shadowOffset = { x: 2.0, y: 3.5 };
 
     for (let i = 0; i < numVerts; i += 1) {
       const theta = (i / numVerts) * TAU;

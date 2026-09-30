@@ -27,28 +27,25 @@ describe("RocksPass", () => {
     expect(pass.getActiveRocks().length).toBe(ROCKS.visibleRockCount);
 
     const submerged = pass.getActiveRocks().filter((r) => r.depth === "submerged");
-    const emergent = pass.getActiveRocks().filter((r) => r.depth === "emergent");
+    expect(submerged.length).toBe(pass.getActiveRocks().length);
     expect(submerged.length).toBeGreaterThan(0);
-    expect(emergent.length).toBeGreaterThan(0);
 
     ROCKS.visibleRockCount = origCount;
   });
 
-  it("hit-tests emergent boulders and ignores empty water", () => {
+  it("safely ignores empty water and submerged rocks during surface hit-testing", () => {
     const pass = new RocksPass();
     ROCKS.visibleRockCount = POND_ROCKS.length;
     pass.update(0);
 
-    const activeEmergent = pass.getActiveRocks().find((r) => r.depth === "emergent");
-    expect(activeEmergent).toBeDefined();
-    if (activeEmergent) {
-      const center = viewportPoint(activeEmergent.x, activeEmergent.y);
+    // Submerged rocks on the pond bed do not intercept surface pointer taps
+    const firstRock = pass.getActiveRocks()[0];
+    if (firstRock) {
+      const center = viewportPoint(firstRock.x, firstRock.y);
       const hit = pass.hitTest(center);
-      expect(hit).not.toBeNull();
-      expect(hit?.depth).toBe("emergent");
+      expect(hit).toBeNull();
     }
 
-    // Coordinates in the middle of empty water
     const miss = pass.hitTest({ x: 240, y: 135 });
     expect(miss).toBeNull();
   });

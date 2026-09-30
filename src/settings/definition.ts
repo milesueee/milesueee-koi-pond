@@ -894,41 +894,80 @@ const rocks = group(
 );
 
 const pondRocks = collection(rockItem, [
-  // Curated blend of submerged riverbed pebbles across the bed & emergent perimeter stones:
-  // Submerged pebbles on the pond bed:
-  { x: 195, y: 72, radiusX: 11, radiusY: 8, angle: 0.45, depth: "submerged", palette: 0, moss: 0.3 },
-  { x: 285, y: 115, radiusX: 14, radiusY: 10, angle: 2.15, depth: "submerged", palette: 2, moss: 0.15 },
-  { x: 160, y: 185, radiusX: 12, radiusY: 9, angle: 1.15, depth: "submerged", palette: 1, moss: 0.45 },
-  { x: 345, y: 195, radiusX: 9, radiusY: 7, angle: 3.4, depth: "submerged", palette: 3, moss: 0.2 },
-  { x: 235, y: 228, radiusX: 13, radiusY: 9, angle: 5.1, depth: "submerged", palette: 0, moss: 0.35 },
-  { x: 215, y: 142, radiusX: 8, radiusY: 6, angle: 0.85, depth: "submerged", palette: 2, moss: 0.1 },
-  // Emergent boulders around the perimeter:
-  { x: 42, y: 112, radiusX: 18, radiusY: 14, angle: 0.95, depth: "emergent", palette: 1, moss: 0.6 },
-  { x: 442, y: 120, radiusX: 19, radiusY: 15, angle: 4.8, depth: "emergent", palette: 0, moss: 0.4 },
-  { x: 370, y: 242, radiusX: 16, radiusY: 12, angle: 2.75, depth: "emergent", palette: 3, moss: 0.3 },
-  { x: 148, y: 248, radiusX: 17, radiusY: 13, angle: 1.65, depth: "emergent", palette: 2, moss: 0.5 },
-  { x: 265, y: 22, radiusX: 20, radiusY: 14, angle: 3.9, depth: "emergent", palette: 0, moss: 0.55 },
-  { x: 388, y: 55, radiusX: 15, radiusY: 11, angle: 5.6, depth: "emergent", palette: 1, moss: 0.4 },
-  // Reserve placements (up to 16 defaults, can grow up to 32):
-  { x: 88, y: 195, radiusX: 13, radiusY: 10, angle: 0.25, depth: "submerged", palette: 2, moss: 0.2 },
-  { x: 418, y: 165, radiusX: 14, radiusY: 11, angle: 1.85, depth: "emergent", palette: 3, moss: 0.35 },
-  { x: 115, y: 48, radiusX: 12, radiusY: 8, angle: 4.15, depth: "submerged", palette: 0, moss: 0.25 },
-  { x: 310, y: 245, radiusX: 15, radiusY: 10, angle: 2.95, depth: "submerged", palette: 1, moss: 0.4 },
+  // Grouped following real Japanese-garden stone arrangement: odd-numbered
+  // clusters (a big anchor boulder + smaller companion stones), biased to
+  // the edges/shallows so the open center stays clear for the koi to swim
+  // through. Loose singles/pairs read as deliberate accents rather than
+  // scattered debris because everything else on screen is clustered.
+
+  // Cluster A (3) — left edge, anchored on the original left-side boulder
+  { x: 42, y: 112, radiusX: 18, radiusY: 14, angle: 0.95, depth: "submerged", palette: 1, moss: 0.6 },
+  { x: 58, y: 128, radiusX: 7, radiusY: 6, angle: 2.4, depth: "submerged", palette: 1, moss: 0.5 },
+  { x: 30, y: 95, radiusX: 6, radiusY: 5, angle: 5.0, depth: "submerged", palette: 1, moss: 0.4 },
+
+  // Cluster B (3) — right edge, twin boulders (a common real-garden pairing)
+  // plus one companion pebble tucked between them
+  { x: 442, y: 120, radiusX: 19, radiusY: 15, angle: 4.8, depth: "submerged", palette: 0, moss: 0.4 },
+  { x: 418, y: 165, radiusX: 14, radiusY: 11, angle: 1.85, depth: "submerged", palette: 0, moss: 0.35 },
+  { x: 430, y: 140, radiusX: 6, radiusY: 5, angle: 0.6, depth: "submerged", palette: 0, moss: 0.3 },
+
+  // Cluster C (5) — bottom-right showcase grouping: one large anchor and companion pebbles
+  { x: 370, y: 242, radiusX: 19, radiusY: 14, angle: 2.75, depth: "submerged", palette: 3, moss: 0.3 },
+  { x: 352, y: 228, radiusX: 9, radiusY: 7, angle: 4.1, depth: "submerged", palette: 3, moss: 0.25 },
+  { x: 388, y: 255, radiusX: 7, radiusY: 6, angle: 1.3, depth: "submerged", palette: 3, moss: 0.2 },
+  { x: 340, y: 250, radiusX: 6, radiusY: 5, angle: 3.6, depth: "submerged", palette: 0, moss: 0.15 },
+  { x: 395, y: 228, radiusX: 5, radiusY: 4, angle: 0.2, depth: "submerged", palette: 3, moss: 0.3 },
+
+  // Cluster D (2) — bottom-left pair
+  { x: 148, y: 248, radiusX: 17, radiusY: 13, angle: 1.65, depth: "submerged", palette: 2, moss: 0.5 },
+  { x: 128, y: 232, radiusX: 8, radiusY: 6, angle: 3.3, depth: "submerged", palette: 2, moss: 0.4 },
+
+  // Cluster G (3) — top edge, a large anchor with a smaller companion
+  // boulder pulled in close plus one submerged pebble at their base
+  { x: 265, y: 22, radiusX: 20, radiusY: 14, angle: 3.9, depth: "submerged", palette: 0, moss: 0.55 },
+  { x: 300, y: 45, radiusX: 15, radiusY: 11, angle: 5.6, depth: "submerged", palette: 1, moss: 0.4 },
+  { x: 245, y: 40, radiusX: 7, radiusY: 6, angle: 2.0, depth: "submerged", palette: 0, moss: 0.35 },
 ], {
   label: "Pond rocks",
   countFrom: ["rocks", "visibleRockCount"],
   max: 32,
   effect: "rocks:rebuild",
   create: (live) => {
-    const l = live as { rocks: ValueOf<typeof rocks> };
+    const l = live as { rocks: ValueOf<typeof rocks>; "pond-rocks"?: RockSetting[] };
     const randomInt = (min: number, maxExclusive: number): number =>
       Math.floor(min + Math.random() * (maxExclusive - min));
     const rounded = (min: number, max: number): number => Number((min + Math.random() * (max - min)).toFixed(2));
-    const depth: RockDepth = Math.random() < 0.45 ? "emergent" : "submerged";
-    const pos = depth === "emergent"
-      ? randomEdgePosition()
-      : { x: randomInt(40, LAYOUT.width - 40), y: randomInt(35, LAYOUT.height - 35) };
-    const radius = depth === "emergent" ? rounded(14, 22) : rounded(7, 15);
+
+    // Rocks added beyond the curated 16 (via the "Pond rocks" slider, or
+    // Scatter) mostly nestle beside an existing rock as a smaller companion,
+    // extending a cluster, rather than landing as a brand new independent
+    // scatter point.
+    const existing = Array.isArray(l["pond-rocks"]) ? l["pond-rocks"] : undefined;
+    const attachToExisting = !!existing && existing.length > 0 && Math.random() < 0.55;
+
+    if (attachToExisting && existing) {
+      const host = existing[randomInt(0, existing.length)];
+      const depth: RockDepth = "submerged";
+      const distance = rounded(10, 22);
+      const bearing = rounded(0, Math.PI * 2);
+      const radius = rounded(6, 12);
+      const aspect = rounded(0.7, 1.3);
+      return {
+        x: Math.round(Math.max(6, Math.min(LAYOUT.width - 6, host.x + Math.cos(bearing) * distance))),
+        y: Math.round(Math.max(6, Math.min(LAYOUT.height - 6, host.y + Math.sin(bearing) * distance))),
+        radiusX: radius,
+        radiusY: Number((radius * aspect).toFixed(2)),
+        angle: rounded(0, Math.PI * 2),
+        depth,
+        palette: host.palette,
+        moss: rounded(Math.max(0, host.moss - 0.15), Math.min(1, host.moss + 0.1)),
+      };
+    }
+
+    // New cluster anchor on the bed biased to the shallows/perimeter
+    const depth: RockDepth = "submerged";
+    const pos = randomEdgePosition();
+    const radius = rounded(12, 18);
     const aspect = rounded(0.7, 1.3);
     return {
       x: pos.x,
@@ -938,7 +977,7 @@ const pondRocks = collection(rockItem, [
       angle: rounded(0, Math.PI * 2),
       depth,
       palette: randomInt(0, l.rocks.palettes.length),
-      moss: rounded(0.1, 0.6),
+      moss: rounded(0.2, 0.6),
     };
   },
 });

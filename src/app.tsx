@@ -1,4 +1,5 @@
 import {
+  Clock,
   Cloud,
   CloudFog,
   CloudRain,
@@ -288,6 +289,10 @@ export function App() {
   const [displayWhenUiHidden] = useSetting<boolean>([
     "screensaver",
     "displayWhenUiHidden",
+  ]);
+  const [clockEnabled, setClockEnabled] = useSetting<boolean>([
+    "screensaver",
+    "enabled",
   ]);
   const settingsMeta = useSettingsMeta();
   const { weather: weatherPreset, rain: rainEnabled, canUndo } = settingsMeta;
@@ -749,6 +754,9 @@ export function App() {
           break;
         case "KeyH":
           setShowInterface((current) => !current);
+          break;
+        case "KeyC":
+          setClockEnabled(!clockEnabled);
           break;
         case "KeyR":
           school.reset();
@@ -1295,6 +1303,23 @@ export function App() {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <label className="toggle-control" title="Toggle clock (C)">
+                <Clock
+                  aria-hidden="true"
+                  className={`toggle-control__icon ${
+                    clockEnabled
+                      ? "toggle-control__icon--active"
+                      : "toggle-control__icon--muted"
+                  }`}
+                />
+                <span className="control-label">Clock</span>
+                <Switch
+                  size="sm"
+                  checked={clockEnabled}
+                  onCheckedChange={(checked) => setClockEnabled(checked)}
+                  aria-label="Toggle clock (C)"
+                />
+              </label>
               <label className="toggle-control">
                 {rainEnabled ? (
                   <CloudRain aria-hidden="true" className="toggle-control__icon toggle-control__icon--active" />

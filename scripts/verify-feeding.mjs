@@ -31,34 +31,55 @@ async function verify() {
   await page.screenshot({ path: leftClickScreenshotPath });
   console.log('Saved left click screenshot:', leftClickScreenshotPath);
 
-  // 2. Test right-click: Should drop food and activate school feeding attraction
-  await canvas.click({ position: { x: 400, y: 300 }, button: 'right' });
-  await page.waitForTimeout(200);
+  // 2. Test right-click: Drop food pellets
+  await canvas.click({ position: { x: 500, y: 320 }, button: 'right' });
+  await page.waitForTimeout(300);
 
-  const feedingState = await page.evaluate(() => {
-    const foodCount = window.nagomiRuntime?.renderer.getFood().getPellets().length ?? 0;
-    const targetActive = window.nagomiRuntime?.school.targetActive ?? false;
-    return { foodCount, targetActive };
+  const initialPellets = await page.evaluate(() => {
+    const pellets = window.nagomiRuntime?.renderer.getFood().getPellets() ?? [];
+    return pellets.map(p => ({ id: p.id, x: p.x, y: p.y, depth: p.depth, vx: p.vx, vy: p.vy }));
   });
-  console.log('After right click feeding state:', feedingState);
+  console.log('Spawned pellets count:', initialPellets.length, 'depths:', initialPellets.map(p => p.depth));
 
-  // Wait a second for koi to swim toward food
-  await page.waitForTimeout(1200);
-  const feedingScreenshotPath = path.resolve(artifactDir, 'right_click_feeding_koi.png');
-  await page.screenshot({ path: feedingScreenshotPath });
-  console.log('Saved feeding screenshot:', feedingScreenshotPath);
+  // 3. Test ripple impact on pellets: Left click nearby at (450, 320) - 50px away
+  await canvas.click({ position: { x: 450, y: 320 }, button: 'left' });
+  // Wait for the ripple wave to expand across the 50px distance (~0.7s)
+  await page.waitForTimeout(700);
 
-  // Wait for koi to eat food pellets
-  await page.waitForTimeout(2500);
-  const afterEatingState = await page.evaluate(() => {
-    const foodCount = window.nagomiRuntime?.renderer.getFood().getPellets().length ?? 0;
-    return { foodCount };
+  const afterRipplePellets = await page.evaluate(() => {
+    const pellets = window.nagomiRuntime?.renderer.getFood().getPellets() ?? [];
+    return pellets.map(p => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, depth: p.depth }));
   });
-  console.log('After feeding eating state:', afterEatingState);
+  console.log('After ripple hit, first pellet velocity:', afterRipplePellets[0]?.vx, afterRipplePellets[0]?.vy);
 
-  const afterEatingScreenshotPath = path.resolve(artifactDir, 'koi_eating_food.png');
-  await page.screenshot({ path: afterEatingScreenshotPath });
-  console.log('Saved after eating screenshot:', afterEatingScreenshotPath);
+  const ripplePushScreenshotPath = path.resolve(artifactDir, 'pellets_ripple_reaction.png');
+  await page.screenshot({ path: ripplePushScreenshotPath });
+  console.log('Saved ripple push screenshot:', ripplePushScreenshotPath);
+
+  // 4. Test sinking progression: Advance a pellet's age into sinking phase to verify depth and visual darkening
+  await page.evaluate(() => {
+    const food = window.nagomiRuntime?.renderer.getFood();
+    if (food) {
+      food.spawnAt({ x: 280, y: 400 }, 4);
+      for (const p of food.getPellets()) {
+        if (p.x < 350) {
+          p.age = p.floatDuration + 2.5; // halfway through sinking
+        }
+      }
+    }
+  });
+
+  await page.waitForTimeout(300);
+
+  const sinkingPellets = await page.evaluate(() => {
+    const pellets = window.nagomiRuntime?.renderer.getFood().getPellets() ?? [];
+    return pellets.map(p => ({ id: p.id, depth: p.depth, age: p.age }));
+  });
+  console.log('Sinking pellets state:', sinkingPellets);
+
+  const sinkingScreenshotPath = path.resolve(artifactDir, 'pellets_sinking_depth.png');
+  await page.screenshot({ path: sinkingScreenshotPath });
+  console.log('Saved sinking screenshot:', sinkingScreenshotPath);
 
   await browser.close();
 }

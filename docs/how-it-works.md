@@ -16,7 +16,7 @@ A procedural animation is more like giving a dancer a set of rules:
 - Move calmly most of the time.
 - Keep some distance from other dancers.
 - Avoid the edge of the stage.
-- Turn toward a point when the visitor taps it.
+- Turn toward food pellets when the visitor feeds them.
 - Move the body more strongly when moving faster.
 
 The computer applies these rules many times each second. The result looks
@@ -106,24 +106,25 @@ and closer to the surface. A deeper fish receives stronger water tinting and a
 different shadow strength.
 
 Fish spend varying amounts of time near the surface or deeper in the pond.
-When you call them with a ripple, they rise toward the surface as they respond.
+When you feed them, they rise toward the surface to eat the floating pellets.
 The depth changes smoothly, so they do not suddenly jump between two visual
 styles.
 
-## 5. A tap becomes a pond event
+## 5. Pond events: Ripples & Feeding
 
-When you tap or click the water:
+Interaction in the pond is divided between gentle surface ripples and active feeding:
 
-1. The screen position is converted into the pond’s `480 × 270` coordinate
-   system.
-2. A ripple starts at that point.
-3. Every large koi receives its own response delay.
-4. Farther or less reactive fish can respond later.
-5. Responding fish enter a burst, rise, and steer toward the point.
-6. Tiny fish flee from the disturbance instead.
+1. **Left-Click or Tap (Ripples only):**
+   - The screen position is converted into the pond’s `480 × 270` coordinate system.
+   - Expanding water ripples propagate across the surface with soothing acoustic tones.
+   - The koi ignore the disturbance and continue their natural swimming and cruising.
 
-Near the target, koi receive a small circling force. This keeps them moving
-around the ripple instead of stacking directly on top of one another.
+2. **Right-Click (Feeding the Koi):**
+   - Floating food pellets drop onto the water surface with subtle splash rings.
+   - Pellets drift with natural harmonic currents and displace when hit by ripples.
+   - Koi detect the food cluster centroid and receive calculated response delays based on distance and temperament.
+   - Approaching koi rise to the surface and eat pellets with authentic mouth gulp animations.
+   - Uneaten pellets gradually waterlog, lose surface shadows, and sink to the pond bed.
 
 ## 6. The water is made from layers
 

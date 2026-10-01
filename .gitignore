@@ -37,3 +37,4 @@ bun.lock
 .gemini
 .codex
 .agent
+scripts/create-vm.mjs

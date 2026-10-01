@@ -131,7 +131,27 @@ export class School {
   }
 
   public feedAt(point: Vec2): void {
-    this.callTo(point);
+    this.target = { ...point };
+    this.targetActive = true;
+    this.targetAge = 0;
+    for (let index = 0; index < this.count; index += 1) {
+      const fish = this.fish[index];
+      const response = FISH.callResponse;
+      const distanceToCall = length(sub(fish.position, point));
+      const distanceAmount = Math.pow(
+        clamp(distanceToCall / response.distanceAtMaximumDelay, 0, 1),
+        response.distanceExponent,
+      );
+      fish.callDelay =
+        response.minimumDelaySeconds +
+        distanceAmount * response.maximumDistanceDelaySeconds +
+        this.random.range(0, response.randomJitterSeconds) +
+        (1 - fish.reactivity) * response.temperamentDelaySeconds;
+      fish.respondedToCall = false;
+      fish.callResponseAge = 0;
+    }
+    // Subtle single raindrop-like ripple for the gentle pellet splash
+    this.ripples.trigger("rain", point, 0.35, 1);
   }
 
   public updateTarget(point: Vec2): void {

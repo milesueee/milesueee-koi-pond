@@ -86,5 +86,21 @@ describe("FoodPass", () => {
 
     expect(() => food.dispose()).not.toThrow();
   });
+
+  it("triggers subtle drop ripple on feedAt without heavy touch ripples", () => {
+    const school = new School();
+    school.feedAt({ x: 300, y: 300 });
+
+    const touchRipples = school.ripples.instances.filter(
+      (r) => r.alive && r.type === "touch",
+    );
+    expect(touchRipples).toHaveLength(0);
+
+    const rainRipples = school.ripples.instances.filter(
+      (r) => r.alive && r.type === "rain",
+    );
+    expect(rainRipples).toHaveLength(1);
+    expect(rainRipples[0].strength).toBeLessThan(1.0);
+  });
 });
 

@@ -32,6 +32,10 @@ async function verify() {
   console.log('Saved left click screenshot:', leftClickScreenshotPath);
 
   // 2. Test right-click: Drop food pellets
+  await page.evaluate(() => {
+    window.nagomiRuntime?.school.ripples.reset();
+  });
+
   await canvas.click({ position: { x: 500, y: 320 }, button: 'right' });
   await page.waitForTimeout(300);
 
@@ -40,6 +44,14 @@ async function verify() {
     return pellets.map(p => ({ id: p.id, x: p.x, y: p.y, depth: p.depth, vx: p.vx, vy: p.vy }));
   });
   console.log('Spawned pellets count:', initialPellets.length, 'depths:', initialPellets.map(p => p.depth));
+
+  const dropRipples = await page.evaluate(() => {
+    const ripples = window.nagomiRuntime?.school.ripples.instances ?? [];
+    const touchCount = ripples.filter(r => r.alive && r.type === 'touch').length;
+    const dropRipples = ripples.filter(r => r.alive && r.type === 'rain');
+    return { touchCount, dropCount: dropRipples.length, maxStrength: dropRipples[0]?.strength };
+  });
+  console.log('Drop ripples verification (should have 0 touch, gentle drop):', dropRipples);
 
   // 3. Test ripple impact on pellets: Left click nearby at (450, 320) - 50px away
   await canvas.click({ position: { x: 450, y: 320 }, button: 'left' });

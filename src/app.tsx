@@ -679,6 +679,11 @@ export function App() {
     const initialRain = settings.meta().rain ? 1 : 0;
     school.setRainIntensity(initialRain);
     renderer.setRainIntensity(initialRain);
+    renderer.onPelletEaten = () => {
+      playSoundEffect((synth) =>
+        synth.playWaterDip({ volume: 0.16 }),
+      );
+    };
     const disconnectEffects = connectSettingsEffects(settings, { school, renderer });
 
     const resizeObserver = new ResizeObserver(() => {
@@ -802,12 +807,38 @@ export function App() {
     );
   };
 
+  const lastFeedTimeRef = useRef(0);
+
+  const feedKoi = (point: Vec2): void => {
+    const now = performance.now();
+    if (now - lastFeedTimeRef.current < 120) return;
+    lastFeedTimeRef.current = now;
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+
+    runtime.renderer.feedAt(point);
+    runtime.school.feedAt(point);
+    playSoundEffect((synth) =>
+      synth.playWaterDrop({ pitchMultiplier: 1.35, volume: 0.22 }),
+    );
+  };
+
   const handlePondPointerDown = (
     event: ReactPointerEvent<HTMLCanvasElement>,
   ): void => {
     const runtime = runtimeRef.current;
     if (!runtime) return;
     const point = getPondCoords(event);
+
+    if (event.button === 2) {
+      // Right-click: feed the koi!
+      event.preventDefault();
+      feedKoi(point);
+      return;
+    }
+
+    if (event.button !== 0) return;
+
     isPointerDownRef.current = true;
     lastPointerPosRef.current = point;
     lastRipplePosRef.current = point;
@@ -837,9 +868,10 @@ export function App() {
           synth.playWaterSplash({ intensity: "gentle", volume: 0.16 }),
         );
       } else {
+        runtime.school.ripples.trigger("touch", point);
         playSoundEffect((synth) => synth.playWaterDrop());
       }
-      runtime.school.callTo(point);
+      // Left click ONLY ripples the water — koi do NOT approach!
       setStats(sceneStats(runtime));
     }
   };
@@ -874,7 +906,7 @@ export function App() {
             ? Math.hypot(point.x - lastRipple.x, point.y - lastRipple.y)
             : 999;
           if (distSinceRipple > 34) {
-            runtime.school.callTo(point);
+            runtime.school.ripples.trigger("touch", point);
             playSoundEffect((synth) =>
               synth.playWaterRipple({ volume: 0.14, pitchMultiplier: 1.05 }),
             );
@@ -972,6 +1004,14 @@ export function App() {
     setShowInterface(true);
   };
 
+  const handlePondContextMenu = (
+    event: React.MouseEvent<HTMLCanvasElement>,
+  ): void => {
+    event.preventDefault();
+    const point = getPondCoords(event as unknown as ReactPointerEvent<HTMLCanvasElement>);
+    feedKoi(point);
+  };
+
   const selectedWeather = getWeatherPreset(weatherPreset);
   const ambientUiHeldOpen = settingsOpen || weatherMenuOpen;
   const ambientUiHidden =
@@ -1000,6 +1040,7 @@ export function App() {
             onPointerUp={handlePondPointerUp}
             onPointerLeave={handlePondPointerLeave}
             onPointerCancel={handlePondPointerCancel}
+            onContextMenu={handlePondContextMenu}
           />
           {previewFamily !== null && settingsOpen && (
             <div className="pond-preview-label" aria-live="polite">

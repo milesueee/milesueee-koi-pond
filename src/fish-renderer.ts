@@ -14,6 +14,7 @@ import {
   patchesFor,
   type FishAppearance,
 } from "./fish-appearance";
+import { FoodPass } from "./food";
 import { Koi, SwimState } from "./koi";
 import {
   LotusLeavesPass,
@@ -239,6 +240,8 @@ export class FishRenderer {
   private readonly lotusLeaves = new LotusLeavesPass();
   private readonly butterflies = new ButterflyPass();
   private readonly rain = new RainPass();
+  private readonly food = new FoodPass();
+  public onPelletEaten?: (pos: Vec2) => void;
   private readonly fishShadowMaterial = shadowMaterial(1);
   private readonly shadowTriangles: GeometryBatch;
   private readonly outerTriangles: GeometryBatch;
@@ -304,6 +307,7 @@ export class FishRenderer {
       this.duckweed.shadowGroup,
       this.rocks.surfaceShadowGroup,
       this.butterflies.shadowGroup,
+      this.food.shadowGroup,
     );
     this.surfaceObjectScene.add(
       this.duckweed.group,
@@ -311,6 +315,7 @@ export class FishRenderer {
       this.lotusLeaves.group,
       this.butterflies.group,
       this.rain.group,
+      this.food.group,
     );
     this.weatherScene.add(this.weather.mesh);
 
@@ -443,6 +448,7 @@ export class FishRenderer {
     this.surfaceDisturbance.dispose();
     this.fishShadowMaterial.dispose();
     this.rocks.dispose();
+    this.food.dispose();
     this.weather.dispose();
     this.renderer.dispose();
   }
@@ -559,6 +565,7 @@ export class FishRenderer {
     this.lotusLeaves.update(time);
     this.butterflies.update(time);
     this.rain.update(time);
+    this.food.update(time, school, this.onPelletEaten);
 
     this.renderer.setRenderTarget(this.underwaterTarget);
     this.renderer.clear();
@@ -928,6 +935,14 @@ export class FishRenderer {
 
   public getRocks(): RocksPass {
     return this.rocks;
+  }
+
+  public feedAt(point: Vec2): void {
+    this.food.spawnAt(point);
+  }
+
+  public getFood(): FoodPass {
+    return this.food;
   }
 }
 

@@ -130,6 +130,16 @@ export class School {
     this.ripples.trigger("touch", point);
   }
 
+  public feedAt(point: Vec2): void {
+    this.callTo(point);
+  }
+
+  public updateTarget(point: Vec2): void {
+    this.target = { ...point };
+    this.targetActive = true;
+    this.targetAge = 0;
+  }
+
   public scatter(): void {
     for (let index = 0; index < this.count; index += 1) {
       const fish = this.fish[index];
